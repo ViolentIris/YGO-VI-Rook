@@ -836,8 +836,8 @@ extern Game* mainGame;
 #define BUTTON_OCNK						391
 #define BUTTON_GIT					392
 #define BUTTON_OTHER_EXIT				393
-#define BUTTON_DV						394
-#define BUTTON_DV_CLOSE					395
+#define BUTTON_DV						373
+#define BUTTON_DV_CLOSE					374
 
 #define BUTTON_SERVER_CHOOSE			394
 #define BUTTON_233						395
