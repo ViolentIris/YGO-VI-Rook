@@ -115,6 +115,7 @@ bool ImageManager::Initial()  {
 	tCardType[5] = driver->getTexture("textures/type/xyz.jpg");
 	tCardType[6] = driver->getTexture("textures/type/link.jpg");
 	tClock = driver->getTexture("textures/clock.png");
+	tDV = GetRandomImage(TEXTURE_DV);
 	int i = 0;
 	char buff[100];
 	for (; i < 21; i++) {
@@ -175,6 +176,7 @@ void ImageManager::RefreshRandomImageList() {
 	RefreshImageDir(L"attack", TEXTURE_ATTACK);
 	RefreshImageDir(L"act", TEXTURE_ACTIVATE);
 	RefreshImageDir(L"head", TEXTURE_HEAD_S);
+	RefreshImageDir(L"fortune", TEXTURE_DV);
 }
 void ImageManager::RefreshImageDir(std::wstring path, int image_type) {
 	std::wstring search = L"./textures/" + path;

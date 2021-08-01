@@ -339,6 +339,7 @@ public:
 	irr::gui::IGUIButton* btnOCNK;
 	irr::gui::IGUIButton* btnOtherExit;
 	irr::gui::IGUIButton* btnGIT;
+	irr::gui::IGUIButton* btnDV;
 	//system setting
 	irr::gui::IGUIWindow* wSystem;
 	irr::gui::IGUICheckBox* chkMRandom;
@@ -644,6 +645,10 @@ public:
 	irr::gui::IGUIButton* btnChainWhenAvail;
 	//cancel or finish
 	irr::gui::IGUIButton* btnCancelOrFinish;
+	//fortune
+	irr::gui::IGUIWindow* wDV;
+	irr::gui::IGUIImage* imgDV;
+	irr::gui::IGUIButton* btnDVClose;
 };
 
 extern Game* mainGame;
@@ -831,6 +836,8 @@ extern Game* mainGame;
 #define BUTTON_OCNK						391
 #define BUTTON_GIT					392
 #define BUTTON_OTHER_EXIT				393
+#define BUTTON_DV						394
+#define BUTTON_DV_CLOSE					395
 
 #define BUTTON_SERVER_CHOOSE			394
 #define BUTTON_233						395
@@ -896,6 +903,7 @@ extern Game* mainGame;
 #define TEXTURE_ATTACK				7
 #define TEXTURE_ACTIVATE			8
 #define TEXTURE_HEAD_S				9
+#define TEXTURE_DV					11
 
 #define DEFAULT_DUEL_RULE			5
 

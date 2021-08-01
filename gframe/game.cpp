@@ -118,7 +118,7 @@ bool Game::Initialize() {
 	btnOther = env->addButton(rect<s32>(10, 170, 270, 200), wMainMenu, BUTTON_OTHER, dataManager.GetSysString(1422));
 	btnSYS = env->addButton(rect<s32>(10, 205, 270, 235), wMainMenu, BUTTON_SYS, dataManager.GetSysString(1207));
 	//other
-	wOther = env->addWindow(rect<s32>(370, 200, 650, 415), false, dataManager.GetSysString(1422));
+	wOther = env->addWindow(rect<s32>(370, 185, 650, 430), false, dataManager.GetSysString(1422));
 	wOther->getCloseButton()->setVisible(false);
 	wOther->setVisible(false);
 	wOther->setDraggable(false);
@@ -126,7 +126,8 @@ bool Game::Initialize() {
 	btnKANabell = env->addButton(rect<s32>(10, 65, 270, 95), wOther, BUTTON_KANABELL, dataManager.GetSysString(1424));
 	btnOCNK = env->addButton(rect<s32>(10, 100, 270, 130), wOther, BUTTON_OCNK, dataManager.GetSysString(1425));
 	btnGIT = env->addButton(rect<s32>(10, 135, 270, 165), wOther, BUTTON_GIT, dataManager.GetSysString(1426));
-	btnOtherExit = env->addButton(rect<s32>(10, 170, 270, 200), wOther, BUTTON_OTHER_EXIT, dataManager.GetSysString(1210));
+	btnDV = env->addButton(rect<s32>(10, 170, 270, 200), wOther, BUTTON_DV, dataManager.GetSysString(1288));
+	btnOtherExit = env->addButton(rect<s32>(10, 205, 270, 235), wOther, BUTTON_OTHER_EXIT, dataManager.GetSysString(1210));
 	//system setting
 	wSystem = env->addWindow(rect<s32>(215, 160, 815, 365), false, dataManager.GetSysString(1207));
 	wSystem->getCloseButton()->setVisible(false);
@@ -196,6 +197,17 @@ bool Game::Initialize() {
 	btnBGOK3 = env->addButton(rect<s32>(25, 250, 170, 300), wBGS, BUTTON_BGS_OK3, dataManager.GetSysString(1451));
 	btnBGSExit = env->addButton(rect<s32>(25, 320, 170, 365), wBGS, BUTTON_BGS_EXIT, dataManager.GetSysString(1210));
 	RefreshBGS();
+	//fortune
+	wDV = env->addWindow(rect<s32>(35, 70, 635, 770), false, L"");
+	wDV->getCloseButton()->setVisible(false);
+	wDV->setDrawTitlebar(false);
+	wDV->setDrawBackground(false);
+	wDV->setVisible(false);
+	imgDV = env->addImage(rect<s32>(0, 0, 430, 625), wDV);
+	imgDV->setImage(imageManager.tDV);
+	imgDV->setScaleImage(false);
+	imgDV->setUseAlphaChannel(true);
+	btnDVClose = env->addButton(rect<s32>(65, 630, 365, 670), wDV, BUTTON_DV_CLOSE, dataManager.GetSysString(1210));
 	//lan mode
 	wLanWindow = env->addWindow(rect<s32>(220, 100, 800, 520), false, dataManager.GetSysString(1200));
 	wLanWindow->getCloseButton()->setVisible(false);
@@ -1810,7 +1822,7 @@ void Game::OnResize() {
 	//env->getSkin()->setFont(guiFont);
 
 	wMainMenu->setRelativePosition(ResizeWin(370, 200, 650, 485));
-	wOther->setRelativePosition(ResizeWin(370, 200, 650, 415));
+	wOther->setRelativePosition(ResizeWin(370, 185, 650, 430));
 	wSystem->setRelativePosition(ResizeWin(215, 160, 815, 365));
 	wHDS->setRelativePosition(ResizeWin(342, 235, 682, 395));
 	wCRS->setRelativePosition(ResizeWin(269.5, 187.5, 774.5, 452.5));
