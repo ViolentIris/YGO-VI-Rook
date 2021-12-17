@@ -61,7 +61,7 @@ workspace "YGOPro"
     filter { "configurations:Release", "action:vs*" }
         flags { "LinkTimeOptimization" }
         staticruntime "On"
-        disablewarnings { "4244", "4267", "4838", "4577", "4819", "4018", "4996", "4477", "4091", "4828", "4800" }
+        disablewarnings { "4244", "4267", "4305", "4838", "4577", "4819", "4018", "4996", "4477", "4091", "4828", "4800" }
 
     filter { "configurations:Release", "not action:vs*" }
         symbols "On"
