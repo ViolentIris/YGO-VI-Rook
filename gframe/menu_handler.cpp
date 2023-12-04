@@ -207,6 +207,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				mainGame->btn23333->setEnabled(true);
 				mainGame->btn7210->setEnabled(true);
 				mainGame->btn222->setEnabled(true);
+				mainGame->btnSP->setEnabled(true);
 				mainGame->btnSCExit->setEnabled(true);
 				mainGame->ShowElement(mainGame->wSC);
 				mainGame->PopupElement(mainGame->wSC);
