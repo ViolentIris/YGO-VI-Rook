@@ -1373,7 +1373,8 @@ void Game::LoadConfig() {
 		} else if(!strcmp(strbuf, "use_image_scale")) {
 			gameConf.use_image_scale = atoi(valbuf) > 0;
 		} else if(!strcmp(strbuf, "errorlog")) {
-			enable_log = atoi(valbuf);
+			unsigned int val = strtol(valbuf, nullptr, 10);
+			enable_log = val & 0xff;
 		} else if(!strcmp(strbuf, "textfont")) {
 			BufferIO::DecodeUTF8(valbuf, wstr);
 			int textfontsize;
