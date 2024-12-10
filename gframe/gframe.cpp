@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
 #endif
 #ifdef __APPLE__
 	CFURLRef bundle_url = CFBundleCopyBundleURL(CFBundleGetMainBundle());
-	CFURLRef bundle_base_url = CFURLCreateCopyDeletingLastPathComponent(NULL, bundle_url);
+	CFURLRef bundle_base_url = CFURLCreateCopyDeletingLastPathComponent(nullptr, bundle_url);
 	CFRelease(bundle_url);
 	CFStringRef path = CFURLCopyFileSystemPath(bundle_base_url, kCFURLPOSIXPathStyle);
 	CFRelease(bundle_base_url);

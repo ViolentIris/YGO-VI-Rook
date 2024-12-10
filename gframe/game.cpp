@@ -13,7 +13,7 @@
 #include <sstream>
 #include <regex>
 
-unsigned short PRO_VERSION = 0x1360;
+unsigned short PRO_VERSION = 0x1361;
 
 bool delay_swap = false;
 int swap_player = 0;
@@ -1152,12 +1152,21 @@ std::wstring Game::SetStaticText(irr::gui::IGUIStaticText* pControl, u32 cWidth,
 	ret.assign(strBuffer);
 	return ret;
 }
+void Game::ReLoadExpansions() {
+	for (size_t i = 0; i < dataManager._expansionDatas.size(); ++i) {
+		int code = dataManager._expansionDatas[i];
+		dataManager._strings.erase(code);
+		dataManager._datas.erase(code);
+	}
+	dataManager._expansionDatas.clear();
+	LoadExpansions();
+}
 void Game::LoadExpansions() {
 	FileSystem::TraversalDir(L"./expansions", [](const wchar_t* name, bool isdir) {
 		if(!isdir && wcsrchr(name, '.') && !mywcsncasecmp(wcsrchr(name, '.'), L".cdb", 4)) {
 			wchar_t fpath[1024];
 			myswprintf(fpath, L"./expansions/%ls", name);
-			dataManager.LoadDB(fpath);
+			dataManager.LoadDB(fpath, true);
 		}
 		if(!isdir && wcsrchr(name, '.') && (!mywcsncasecmp(wcsrchr(name, '.'), L".zip", 4) || !mywcsncasecmp(wcsrchr(name, '.'), L".ypk", 4))) {
 			wchar_t fpath[1024];
@@ -1182,7 +1191,7 @@ void Game::LoadExpansions() {
 			BufferIO::DecodeUTF8(uname, fname);
 #endif
 			if(wcsrchr(fname, '.') && !mywcsncasecmp(wcsrchr(fname, '.'), L".cdb", 4))
-				dataManager.LoadDB(fname);
+				dataManager.LoadDB(fname, true);
 			if(wcsrchr(fname, '.') && !mywcsncasecmp(wcsrchr(fname, '.'), L".conf", 5)) {
 #ifdef _WIN32
 				IReadFile* reader = DataManager::FileSystem->createAndOpenFile(fname);
@@ -1734,7 +1743,7 @@ void Game::AddDebugMsg(const char* msg) {
 	}
 	if (enable_log & 0x2) {
 		char msgbuf[1040];
-		sprintf(msgbuf, "[Script Error]: %s", msg);
+		snprintf(msgbuf, sizeof msgbuf, "[Script Error]: %s", msg);
 		ErrorLog(msgbuf);
 	}
 }
@@ -1742,7 +1751,7 @@ void Game::ErrorLog(const char* msg) {
 	FILE* fp = fopen("error.log", "at");
 	if(!fp)
 		return;
-	time_t nowtime = time(NULL);
+	time_t nowtime = time(nullptr);
 	tm* localedtime = localtime(&nowtime);
 	char timebuf[40];
 	strftime(timebuf, 40, "%Y-%m-%d %H:%M:%S", localedtime);
@@ -2214,7 +2223,7 @@ recti Game::ResizeFit(s32 x, s32 y, s32 x2, s32 y2) {
 }
 void Game::SetWindowsIcon() {
 #ifdef _WIN32
-	HINSTANCE hInstance = (HINSTANCE)GetModuleHandleW(NULL);
+	HINSTANCE hInstance = (HINSTANCE)GetModuleHandleW(nullptr);
 	HICON hSmallIcon = (HICON)LoadImageW(hInstance, MAKEINTRESOURCEW(1), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
 	HICON hBigIcon = (HICON)LoadImageW(hInstance, MAKEINTRESOURCEW(1), IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR);
 	SendMessageW(hWnd, WM_SETICON, ICON_SMALL, (long)hSmallIcon);
