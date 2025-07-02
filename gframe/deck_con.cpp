@@ -1199,6 +1199,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			if(mainGame->env->hasFocus(mainGame->scrFilter))
 				break;
+			irr::gui::IGUIElement* root = mainGame->env->getRootGUIElement();
 			if(root->getElementFromPoint(mouse_pos) != root)
 				break;
 			if(event.MouseInput.Wheel < 0) {
