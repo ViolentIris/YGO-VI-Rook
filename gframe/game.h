@@ -58,6 +58,7 @@ struct Config {
 	unsigned short antialias{ 0 };
 	unsigned short serverport{ 7911 };
 	unsigned char textfontsize{ 14 };
+	unsigned short game_version;
 	wchar_t lasthost[100]{};
 	wchar_t lastport[10]{};
 	wchar_t nickname[20]{};
@@ -632,13 +633,6 @@ public:
 	irr::gui::IGUIButton* btnChainWhenAvail;
 	//cancel or finish
 	irr::gui::IGUIButton* btnCancelOrFinish;
-	//big picture
-	irr::gui::IGUIWindow* wBigCard;
-	irr::gui::IGUIImage* imgBigCard;
-	irr::gui::IGUIButton* btnBigCardOriginalSize;
-	irr::gui::IGUIButton* btnBigCardZoomIn;
-	irr::gui::IGUIButton* btnBigCardZoomOut;
-	irr::gui::IGUIButton* btnBigCardClose;
 };
 
 extern Game* mainGame;
@@ -852,10 +846,6 @@ extern Game* mainGame;
 #define CHECKBOX_DRAW_SINGLE_CHAIN	374
 #define CHECKBOX_LFLIST				375
 #define CHECKBOX_HIDE_PLAYER_NAME	376
-#define BUTTON_BIG_CARD_CLOSE		380
-#define BUTTON_BIG_CARD_ZOOM_IN		381
-#define BUTTON_BIG_CARD_ZOOM_OUT	382
-#define BUTTON_BIG_CARD_ORIG_SIZE	383
 
 #define AVAIL_OCG					0x1
 #define AVAIL_TCG					0x2

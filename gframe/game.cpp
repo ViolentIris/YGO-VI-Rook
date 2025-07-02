@@ -1,3 +1,4 @@
+#include <irrlicht.h>
 #include "config.h"
 #include "game.h"
 #include "myfilesystem.h"
@@ -11,8 +12,10 @@
 #include "netserver.h"
 #include "single_mode.h"
 #include <thread>
+#include <sstream>
+#include <regex>
 
-const unsigned short PRO_VERSION = 0x1362;
+unsigned short PRO_VERSION = 0x1362;
 
 namespace ygo {
 
@@ -54,6 +57,7 @@ bool Game::Initialize() {
 	LoadConfig();
 	irr::SIrrlichtCreationParameters params{};
 	params.AntiAlias = gameConf.antialias;
+	PRO_VERSION = gameConf.game_version;
 	if(gameConf.use_d3d)
 		params.DriverType = irr::video::EDT_DIRECT3D9;
 	else
@@ -163,7 +167,7 @@ bool Game::Initialize() {
 	lpcFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, 48);
 	guiFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, gameConf.textfontsize);
 	smgr = device->getSceneManager();
-	device->setWindowCaption(L"YGOPro");
+	device->setWindowCaption(L"YGO-VI-Rook");
 	device->setResizable(true);
 	if(gameConf.window_maximized)
 		device->maximizeWindow();
@@ -177,15 +181,16 @@ bool Game::Initialize() {
 	SetWindowsIcon();
 	//main menu
 	wchar_t strbuf[256];
-	myswprintf(strbuf, L"YGOPro Version:%X.0%X.%X", (PRO_VERSION & 0xf000U) >> 12, (PRO_VERSION & 0x0ff0U) >> 4, PRO_VERSION & 0x000fU);
-	wMainMenu = env->addWindow(irr::core::rect<irr::s32>(370, 200, 650, 415), false, strbuf);
+	myswprintf(strbuf, L"YGO-VI-Rook Version:%X.0%X.%X", (PRO_VERSION & 0xf000U) >> 12, (PRO_VERSION & 0x0ff0U) >> 4, PRO_VERSION & 0x000fU);
+	wMainMenu = env->addWindow(irr::core::rect<irr::s32>(370, 200, 650, 485), false, strbuf);
 	wMainMenu->getCloseButton()->setVisible(false);
+	wMainMenu->setDraggable(false);
 	btnLanMode = env->addButton(irr::core::rect<irr::s32>(10, 30, 270, 60), wMainMenu, BUTTON_LAN_MODE, dataManager.GetSysString(1200));
 	btnSingleMode = env->addButton(irr::core::rect<irr::s32>(10, 65, 270, 95), wMainMenu, BUTTON_SINGLE_MODE, dataManager.GetSysString(1201));
 	btnReplayMode = env->addButton(irr::core::rect<irr::s32>(10, 100, 270, 130), wMainMenu, BUTTON_REPLAY_MODE, dataManager.GetSysString(1202));
-//	btnTestMode = env->addButton(irr::core::rect<irr::s32>(10, 135, 270, 165), wMainMenu, BUTTON_TEST_MODE, dataManager.GetSysString(1203));
 	btnDeckEdit = env->addButton(irr::core::rect<irr::s32>(10, 135, 270, 165), wMainMenu, BUTTON_DECK_EDIT, dataManager.GetSysString(1204));
 	btnModeExit = env->addButton(irr::core::rect<irr::s32>(10, 170, 270, 200), wMainMenu, BUTTON_MODE_EXIT, dataManager.GetSysString(1210));
+	btnSYS = env->addButton(rect<s32>(10, 205, 270, 235), wMainMenu, BUTTON_SYS, dataManager.GetSysString(1207));
 	//lan mode
 	wLanWindow = env->addWindow(irr::core::rect<irr::s32>(220, 100, 800, 520), false, dataManager.GetSysString(1200));
 	wLanWindow->getCloseButton()->setVisible(false);
@@ -905,23 +910,6 @@ bool Game::Initialize() {
 	//cancel or finish
 	btnCancelOrFinish = env->addButton(irr::core::rect<irr::s32>(205, 230, 295, 265), 0, BUTTON_CANCEL_OR_FINISH, dataManager.GetSysString(1295));
 	btnCancelOrFinish->setVisible(false);
-	//big picture
-	wBigCard = env->addWindow(irr::core::rect<irr::s32>(0, 0, 0, 0), false, L"");
-	wBigCard->getCloseButton()->setVisible(false);
-	wBigCard->setDrawTitlebar(false);
-	wBigCard->setDrawBackground(false);
-	wBigCard->setVisible(false);
-	imgBigCard = env->addImage(irr::core::rect<irr::s32>(0, 0, 0, 0), wBigCard);
-	imgBigCard->setScaleImage(false);
-	imgBigCard->setUseAlphaChannel(true);
-	btnBigCardOriginalSize = env->addButton(irr::core::rect<irr::s32>(205, 100, 295, 135), 0, BUTTON_BIG_CARD_ORIG_SIZE, dataManager.GetSysString(1443));
-	btnBigCardZoomIn = env->addButton(irr::core::rect<irr::s32>(205, 140, 295, 175), 0, BUTTON_BIG_CARD_ZOOM_IN, dataManager.GetSysString(1441));
-	btnBigCardZoomOut = env->addButton(irr::core::rect<irr::s32>(205, 180, 295, 215), 0, BUTTON_BIG_CARD_ZOOM_OUT, dataManager.GetSysString(1442));
-	btnBigCardClose = env->addButton(irr::core::rect<irr::s32>(205, 230, 295, 265), 0, BUTTON_BIG_CARD_CLOSE, dataManager.GetSysString(1440));
-	btnBigCardOriginalSize->setVisible(false);
-	btnBigCardZoomIn->setVisible(false);
-	btnBigCardZoomOut->setVisible(false);
-	btnBigCardClose->setVisible(false);
 	//leave/surrender/exit
 	btnLeaveGame = env->addButton(irr::core::rect<irr::s32>(205, 5, 295, 80), 0, BUTTON_LEAVE_GAME, L"");
 	btnLeaveGame->setVisible(false);
@@ -1045,7 +1033,7 @@ void Game::MainLoop() {
 		if(cur_time < fps * 17 - 20)
 			std::this_thread::sleep_for(std::chrono::milliseconds(20));
 		if(cur_time >= 1000) {
-			myswprintf(cap, L"YGOPro FPS: %d", fps);
+			myswprintf(cap, L"YGO-VI-Rook FPS: %d", fps);
 			device->setWindowCaption(cap);
 			fps = 0;
 			cur_time -= 1000;
@@ -1339,6 +1327,8 @@ void Game::LoadConfig() {
 			enable_log = val & 0xff;
 		} else if(!std::strcmp(strbuf, "serverport")) {
 			gameConf.serverport = std::strtol(valbuf, nullptr, 10);
+		} else if(!std::strcmp(strbuf, "game_version")) {
+			gameConf.game_version = std::strtol(valbuf, nullptr, 10);;
 		} else if(!std::strcmp(strbuf, "lasthost")) {
 			BufferIO::DecodeUTF8(valbuf, gameConf.lasthost);
 		} else if(!std::strcmp(strbuf, "lastport")) {
@@ -1405,7 +1395,7 @@ void Game::LoadConfig() {
 			gameConf.window_height = std::strtol(valbuf, nullptr, 10);
 		} else if(!std::strcmp(strbuf, "resize_popup_menu")) {
 			gameConf.resize_popup_menu = std::strtol(valbuf, nullptr, 10) > 0;
-#ifdef YGOPRO_USE_AUDIO
+#ifdef YGO-VI-Rook_USE_AUDIO
 		} else if(!std::strcmp(strbuf, "enable_sound")) {
 			gameConf.enable_sound = std::strtol(valbuf, nullptr, 10) > 0;
 		} else if(!std::strcmp(strbuf, "sound_volume")) {
@@ -1469,6 +1459,7 @@ void Game::SaveConfig() {
 	std::fprintf(fp, "use_image_load_background_thread = %d\n", gameConf.use_image_load_background_thread ? 1 : 0);
 	std::fprintf(fp, "antialias = %d\n", gameConf.antialias);
 	std::fprintf(fp, "errorlog = %u\n", enable_log);
+	std::fprintf(fp, "game_version = %d\n", gameConf.game_version);
 	BufferIO::CopyWideString(ebNickName->getText(), gameConf.nickname);
 	BufferIO::EncodeUTF8(gameConf.nickname, linebuf);
 	std::fprintf(fp, "nickname = %s\n", linebuf);
@@ -1523,7 +1514,7 @@ void Game::SaveConfig() {
 	std::fprintf(fp, "window_width = %d\n", gameConf.window_width);
 	std::fprintf(fp, "window_height = %d\n", gameConf.window_height);
 	std::fprintf(fp, "resize_popup_menu = %d\n", gameConf.resize_popup_menu ? 1 : 0);
-#ifdef YGOPRO_USE_AUDIO
+#ifdef YGO-VI-Rook_USE_AUDIO
 	std::fprintf(fp, "enable_sound = %d\n", (chkEnableSound->isChecked() ? 1 : 0));
 	std::fprintf(fp, "enable_music = %d\n", (chkEnableMusic->isChecked() ? 1 : 0));
 	std::fprintf(fp, "#Volume of sound and music, between 0 and 100\n");
@@ -1687,6 +1678,7 @@ void Game::AddChatMsg(const wchar_t* msg, int player, bool play_sound) {
 		chatMsg[0].append(L": ");
 		break;
 	case 8: //system custom message, no prefix.
+		soundManager.PlaySoundEffect(SOUND_CHAT);
 		chatMsg[0].append(L"[System]: ");
 		break;
 	case 9: //error message
@@ -1700,6 +1692,9 @@ void Game::AddChatMsg(const wchar_t* msg, int player, bool play_sound) {
 			chatMsg[0].append(L"[---]: ");
 	}
 	chatMsg[0].append(msg);
+	wchar_t msg_front[256];
+	myswprintf(msg_front, L"[Chat]%ls", chatMsg[0].c_str());
+	AddLog(msg_front);
 }
 void Game::ClearChatMsg() {
 	for(int i = 7; i >= 0; --i) {
@@ -1764,16 +1759,19 @@ void Game::CloseGameWindow() {
 	wANCard->setVisible(false);
 	wANNumber->setVisible(false);
 	wANRace->setVisible(false);
+	wCardImg->setVisible(false);
 	wCardSelect->setVisible(false);
 	wCardDisplay->setVisible(false);
 	wCmdMenu->setVisible(false);
 	wFTSelect->setVisible(false);
 	wHand->setVisible(false);
+	wInfos->setVisible(false);
 	wMessage->setVisible(false);
 	wOptions->setVisible(false);
 	wPhase->setVisible(false);
 	wPosSelect->setVisible(false);
 	wQuery->setVisible(false);
+	wSurrender->setVisible(false);
 	wReplayControl->setVisible(false);
 	wReplaySave->setVisible(false);
 	stHintMsg->setVisible(false);
@@ -1866,9 +1864,8 @@ void Game::OnResize() {
 
 	imageManager.ClearTexture();
 	imageManager.ResizeTexture();
-
-	wMainMenu->setRelativePosition(ResizeWin(370, 200, 650, 415));
-	wDeckEdit->setRelativePosition(Resize(309, 5, 605, 130));
+	wMainMenu->setRelativePosition(ResizeWin(370, 200, 650, 485));
+	wDeckEdit->setRelativePosition(Resize(309, 8, 605, 130));
 	cbDBDecks->setRelativePosition(Resize(80, 35, 220, 60));
 	btnClearDeck->setRelativePosition(Resize(115, 99, 165, 120));
 	btnSortDeck->setRelativePosition(Resize(60, 99, 110, 120));
@@ -1996,6 +1993,7 @@ void Game::OnResize() {
 
 	wCardImg->setRelativePosition(ResizeCardImgWin(1, 1, 20, 18));
 	imgCard->setRelativePosition(ResizeCardImgWin(10, 9, 0, 0));
+	imgCard->setScaleImage(true);
 	wInfos->setRelativePosition(Resize(1, 275, 301, 639));
 	stName->setRelativePosition(irr::core::recti(10, 10, 300 * xScale - 13, 10 + 22));
 	lstLog->setRelativePosition(Resize(10, 10, 290, 290));
@@ -2028,12 +2026,6 @@ void Game::OnResize() {
 	btnChainWhenAvail->setRelativePosition(Resize(205, 180, 295, 215));
 	btnShuffle->setRelativePosition(Resize(205, 230, 295, 265));
 	btnCancelOrFinish->setRelativePosition(Resize(205, 230, 295, 265));
-
-	btnBigCardOriginalSize->setRelativePosition(Resize(205, 100, 295, 135));
-	btnBigCardZoomIn->setRelativePosition(Resize(205, 140, 295, 175));
-	btnBigCardZoomOut->setRelativePosition(Resize(205, 180, 295, 215));
-	btnBigCardClose->setRelativePosition(Resize(205, 230, 295, 265));
-
 	irr::s32 barWidth = (xScale > 1) ? gameConf.textfontsize * xScale : gameConf.textfontsize;
 	env->getSkin()->setSize(irr::gui::EGDS_SCROLLBAR_SIZE, barWidth);
 }

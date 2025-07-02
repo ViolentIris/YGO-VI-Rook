@@ -29,9 +29,6 @@ public:
 	void RefreshPackListScroll();
 	void ChangeCategory(int catesel);
 	void ShowDeckManage();
-	void ShowBigCard(int code, float zoom);
-	void ZoomBigCard(irr::s32 centerx = -1, irr::s32 centery = -1);
-	void CloseBigCard();
 
 	bool CardNameContains(const wchar_t *haystack, const wchar_t *needle);
 
