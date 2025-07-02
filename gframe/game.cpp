@@ -190,7 +190,6 @@ bool Game::Initialize() {
 	btnReplayMode = env->addButton(irr::core::rect<irr::s32>(10, 100, 270, 130), wMainMenu, BUTTON_REPLAY_MODE, dataManager.GetSysString(1202));
 	btnDeckEdit = env->addButton(irr::core::rect<irr::s32>(10, 135, 270, 165), wMainMenu, BUTTON_DECK_EDIT, dataManager.GetSysString(1204));
 	btnModeExit = env->addButton(irr::core::rect<irr::s32>(10, 170, 270, 200), wMainMenu, BUTTON_MODE_EXIT, dataManager.GetSysString(1210));
-	btnSYS = env->addButton(rect<s32>(10, 205, 270, 235), wMainMenu, BUTTON_SYS, dataManager.GetSysString(1207));
 	//lan mode
 	wLanWindow = env->addWindow(irr::core::rect<irr::s32>(220, 100, 800, 520), false, dataManager.GetSysString(1200));
 	wLanWindow->getCloseButton()->setVisible(false);

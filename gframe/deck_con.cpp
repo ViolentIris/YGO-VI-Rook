@@ -1195,12 +1195,6 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			break;
 		}
 		case irr::EMIE_MOUSE_WHEEL: {
-			irr::gui::IGUIElement* root = mainGame->env->getRootGUIElement();
-			if(root->getElementFromPoint(mouse_pos) == mainGame->imgBigCard) {
-				bigcard_zoom += 0.1f * event.MouseInput.Wheel;
-				ZoomBigCard(mouse_pos.X, mouse_pos.Y);
-				break;
-			}
 			if(!mainGame->scrFilter->isVisible())
 				break;
 			if(mainGame->env->hasFocus(mainGame->scrFilter))
