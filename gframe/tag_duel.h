@@ -1,7 +1,7 @@
 #ifndef TAG_DUEL_H
 #define TAG_DUEL_H
 
-#include "config.h"
+#include <set>
 #include "network.h"
 #include "deck_manager.h"
 #include "replay.h"
