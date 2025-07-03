@@ -1,17 +1,16 @@
 #ifndef MENU_HANDLER_H
 #define MENU_HANDLER_H
 
-#include <irrlicht.h>
-#include "replay.h"
+#include "config.h"
 
 namespace ygo {
 
 class MenuHandler: public irr::IEventReceiver {
 public:
-	bool OnEvent(const irr::SEvent& event) override;
-	irr::s32 prev_operation{ 0 };
-	int prev_sel{ -1 };
-	Replay temp_replay;
+	virtual bool OnEvent(const irr::SEvent& event);
+	s32 prev_operation;
+	int prev_sel;
+
 };
 
 }
