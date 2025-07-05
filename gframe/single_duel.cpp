@@ -34,7 +34,7 @@ void SingleDuel::JoinGame(DuelPlayer* dp, unsigned char* pdata, bool is_creater)
 		}
 		CTOS_JoinGame packet;
 		std::memcpy(&packet, pdata, sizeof packet);
-		auto* pkt = &packet;
+		auto pkt = &packet;
 		/* disabled version check
 		if(pkt->version != PRO_VERSION) {
 			STOC_ErrorMsg scem;
@@ -582,27 +582,6 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		offset = pbuf;
 		unsigned char engType = BufferIO::ReadUInt8(pbuf);
 		switch (engType) {
-		case MSG_RESET_TIME: {
-			player = BufferIO::ReadInt8(pbuf);
-			short time = BufferIO::ReadInt16(pbuf);
-			if(host_info.time_limit) {
-				if(time)
-					time_limit[player] = time;
-				else
-					time_limit[player] = host_info.time_limit;				
-			}
-			break;			
-		}
-		case MSG_UPDATE_CARD: {
-			auto controller = BufferIO::ReadUInt8(pbuf);
-			auto location = BufferIO::ReadUInt8(pbuf);
-			auto sequence = BufferIO::ReadUInt8(pbuf);
-			auto clen = BufferIO::ReadInt32(pbuf);
-			auto query_flag = BufferIO::ReadUInt32(pbuf);
-			pbuf += (clen - 8);
-			RefreshSingle(controller, location, sequence, query_flag);
-			break;
-		}
 		case MSG_RETRY: {
 			WaitforResponse(last_response);
 			NetServer::SendBufferToPlayer(players[last_response], STOC_GAME_MSG, offset, pbuf - offset);
@@ -631,11 +610,7 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 					NetServer::ReSendToPlayer(*oit);
 				break;
 			}
-			case 10:
-			case 21:
-			case 22:
-			case 23:
-			case 24: {
+			case 10: {
 				NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
 				NetServer::SendBufferToPlayer(players[1], STOC_GAME_MSG, offset, pbuf - offset);
 				for(auto oit = observers.begin(); oit != observers.end(); ++oit)

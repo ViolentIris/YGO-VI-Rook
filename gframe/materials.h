@@ -2,7 +2,6 @@
 #define MATERIALS_H
 
 #include <irrlicht.h>
-#include "config.h"
 
 namespace ygo {
 
@@ -15,14 +14,9 @@ public:
 	irr::video::S3DVertex vCardOutline[4];
 	irr::video::S3DVertex vCardOutliner[4];
 	irr::video::S3DVertex vCardBack[4];
-	irr::video::S3DVertex vPScale[4];
 	irr::video::S3DVertex vSymbol[4];
 	irr::video::S3DVertex vNegate[4];
 	irr::video::S3DVertex vChainNum[4];
-	irr::video::S3DVertex vTotalAtkme[4];
-	irr::video::S3DVertex vTotalAtkop[4];
-	irr::video::S3DVertex vTotalAtkmeT[4];
-	irr::video::S3DVertex vTotalAtkopT[4];
 	irr::video::S3DVertex vActivate[4];
 	irr::video::S3DVertex vField[4];
 	irr::video::S3DVertex vFieldSpell[4];

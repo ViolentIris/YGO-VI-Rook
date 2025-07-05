@@ -3,7 +3,6 @@
 #include "data_manager.h"
 #include <event2/thread.h>
 #include <clocale>
-#include <locale.h>
 #include <memory>
 #ifdef __APPLE__
 #import <CoreFoundation/CoreFoundation.h>
@@ -11,7 +10,6 @@
 
 unsigned int enable_log = 0x3;
 bool exit_on_return = false;
-bool auto_watch_mode = false;
 bool open_file = false;
 wchar_t open_file_name[256] = L"";
 bool bot_mode = false;

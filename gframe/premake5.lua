@@ -74,7 +74,7 @@ project "YGOPro"
         entrypoint "mainCRTStartup"
         defines { "_IRR_WCHAR_FILESYSTEM" }
         files "ygopro.rc"
-        links { "ws2_32", "Dnsapi", "iphlpapi" }
+        links { "ws2_32", "iphlpapi" }
         if USE_AUDIO and AUDIO_LIB == "irrklang" then
             links { "irrKlang" }
             if IRRKLANG_PRO then
@@ -86,8 +86,6 @@ project "YGOPro"
                 filter {}
             end
         end
-    filter "not system:windows"
-        links { "resolv" }
     filter "not action:vs*"
         cppdialect "C++14"
 
@@ -107,7 +105,7 @@ project "YGOPro"
 
     filter "system:linux"
         links { "GL", "X11", "Xxf86vm", "dl", "pthread" }
-        linkoptions { "-fopenmp", "-static-libstdc++", "-static-libgcc" }
+        linkoptions { "-fopenmp" }
         if USE_AUDIO and AUDIO_LIB == "irrklang" then
             links { "IrrKlang" }
             linkoptions{ IRRKLANG_LINK_RPATH }

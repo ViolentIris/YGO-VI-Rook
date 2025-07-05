@@ -69,8 +69,6 @@ const LFList* DeckManager::GetLFList(unsigned int lfhash) {
 	return nullptr;
 }
 static unsigned int checkAvail(unsigned int ot, unsigned int avail) {
-	if(!!(ot & 0x4))
-		return 0;
 	if((ot & avail) == avail)
 		return 0;
 	if((ot & AVAIL_OCG) && (avail != AVAIL_OCG))

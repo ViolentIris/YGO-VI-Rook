@@ -5,7 +5,6 @@
 #include "deck_manager.h"
 #include "sound_manager.h"
 #include "duelclient.h"
-#include "../ocgcore/common.h"
 
 namespace ygo {
 
@@ -182,29 +181,6 @@ void Game::DrawBackGround() {
 			}
 		}
 	}
-	//draw total attack
-	if (mainGame->dInfo.total_attack[0] > 0) {
-	    matManager.mTexture.setTexture(0, imageManager.tTotalAtk);
-		driver->setMaterial(matManager.mTexture);
-		if (dInfo.duel_rule >= 4) {
-		    driver->drawVertexPrimitiveList(matManager.vTotalAtkme, 4, matManager.iRectangle, 2);
-			DrawShadowText(numFont, dInfo.str_total_attack[0], Resize(427, 346, 442, 366), rect<s32>(0, 1, 2, 0), dInfo.total_attack_color[0], 0xff000000, true, false, 0);
-	    } else {
-			driver->drawVertexPrimitiveList(matManager.vTotalAtkmeT, 4, matManager.iRectangle, 2);
-		    DrawShadowText(numFont, dInfo.str_total_attack[0], Resize(587, 326, 607, 346), rect<s32>(0, 1, 2, 0), dInfo.total_attack_color[0], 0xff000000, true, false, 0);
-	    }
-	}
-	if (mainGame->dInfo.total_attack[1] > 0) {
-		matManager.mTexture.setTexture(0, imageManager.tTotalAtk);
-		driver->setMaterial(matManager.mTexture);
-		if (dInfo.duel_rule >= 4) {
-		    driver->drawVertexPrimitiveList(matManager.vTotalAtkop, 4, matManager.iRectangle, 2);
-		    DrawShadowText(numFont, dInfo.str_total_attack[1], Resize(882, 271, 902, 291), rect<s32>(0, 1, 2, 0), dInfo.total_attack_color[1], 0xff000000, true, false, 0);
-	    } else {
-			driver->drawVertexPrimitiveList(matManager.vTotalAtkopT, 4, matManager.iRectangle, 2);
-		    DrawShadowText(numFont, dInfo.str_total_attack[1], Resize(737, 295, 757, 315), rect<s32>(0, 1, 2, 0), dInfo.total_attack_color[1], 0xff000000, true, false, 0);
-	    }
-	}
 	//current sel
 	if (dField.hovered_location != 0 && dField.hovered_location != 2 && dField.hovered_location != POSITION_HINT
 		&& !(dInfo.duel_rule < 4 && dField.hovered_location == LOCATION_MZONE && dField.hovered_sequence > 4)
@@ -219,13 +195,7 @@ void Game::DrawBackGround() {
 				DrawLinkedZones(pcard);
 			}
 		} else if (dField.hovered_location == LOCATION_SZONE)
-		{
 			vertex = matManager.vFieldSzone[dField.hovered_controler][dField.hovered_sequence][rule];
-			ClientCard* pcard = dField.szone[dField.hovered_controler][dField.hovered_sequence];
-			if(pcard && pcard->link_marker) {
-				DrawSpellLinkedZones(pcard);
-			}
-		}
 		else if (dField.hovered_location == LOCATION_GRAVE)
 			vertex = matManager.vFieldGrave[dField.hovered_controler][rule];
 		else if (dField.hovered_location == LOCATION_REMOVED)
@@ -321,25 +291,8 @@ void Game::DrawLinkedZones(ClientCard* pcard) {
 		}
 	}
 }
-void Game::DrawSpellLinkedZones(ClientCard* pcard) {
-	int mark = pcard->link_marker;
-	if (dField.hovered_sequence < 5) {
-		if ((mark & LINK_MARKER_TOP_LEFT) && dField.hovered_sequence > 0) {
-			CheckMutual(0, 0);
-			driver->drawVertexPrimitiveList(&matManager.vFieldMzone[dField.hovered_controler][dField.hovered_sequence - 1], 4, matManager.iRectangle, 2);
-		}
-		if (mark & LINK_MARKER_TOP) {
-			CheckMutual(0, 0);
-			driver->drawVertexPrimitiveList(&matManager.vFieldMzone[dField.hovered_controler][dField.hovered_sequence], 4, matManager.iRectangle, 2);
-		}
-		if ((mark & LINK_MARKER_TOP_RIGHT) && dField.hovered_sequence < 4) {
-			CheckMutual(0, 0);
-			driver->drawVertexPrimitiveList(&matManager.vFieldMzone[dField.hovered_controler][dField.hovered_sequence + 1], 4, matManager.iRectangle, 2);
-		}
-	}
-}
 void Game::CheckMutual(ClientCard* pcard, int mark) {
-	matManager.mSelField.AmbientColor = 0xfff4d964;
+	matManager.mSelField.AmbientColor = 0xff0261a2;
 	driver->setMaterial(matManager.mSelField);
 	if (pcard && pcard->type & TYPE_LINK && pcard->link_marker & mark) {
 		matManager.mSelField.AmbientColor = 0xff009900;
@@ -407,11 +360,7 @@ void Game::DrawCard(ClientCard* pcard) {
 		driver->drawVertexPrimitiveList(matManager.vCardFront, 4, matManager.iRectangle, 2);
 	}
 	if(m22 < 0.99 || pcard->is_moving) {
-	int locationOffset = pcard->location == LOCATION_EXTRA ? 4 : 0;
-	int tagOffset = mainGame->dInfo.tag_player[pcard->controler] ? 2 : 0;
-	if(delay_swap && pcard->controler == swap_player)
-		tagOffset = 2 - tagOffset;
-		matManager.mCard.setTexture(0, imageManager.tCover[pcard->controler + tagOffset + locationOffset]);
+		matManager.mCard.setTexture(0, imageManager.tCover[pcard->controler]);
 		driver->setMaterial(matManager.mCard);
 		driver->drawVertexPrimitiveList(matManager.vCardBack, 4, matManager.iRectangle, 2);
 	}
@@ -452,13 +401,6 @@ void Game::DrawCard(ClientCard* pcard) {
 		driver->setMaterial(matManager.mTexture);
 		driver->drawVertexPrimitiveList(matManager.vNegate, 4, matManager.iRectangle, 2);
 	}
-	if(!dInfo.isReplay && dInfo.player_type < 7) {
-	    driver->draw2DImage(imageManager.tHead[0], ResizeCardMid(328, 60, 408, 140, 328, 60), recti(0, 0, 160, 160), 0, 0, true);
-		driver->draw2DImage(imageManager.tHead[1], ResizeCardMid(910.5, 60, 990.5, 140, 990.5, 140), recti(0, 0, 160, 160), 0, 0, true);
-	} else {
-	    driver->draw2DImage(imageManager.tHead[0], ResizeCardMid(328, 60, 408, 140, 328, 60), recti(0, 0, 160, 160), 0, 0, true);
-		driver->draw2DImage(imageManager.tHead[1], ResizeCardMid(910.5, 60, 990.5, 140, 990.5, 140), recti(0, 0, 160, 160), 0, 0, true);
-	}
 	if(pcard->cmdFlag & COMMAND_ATTACK) {
 		matManager.mTexture.setTexture(0, imageManager.tAttack);
 		driver->setMaterial(matManager.mTexture);
@@ -467,22 +409,6 @@ void Game::DrawCard(ClientCard* pcard) {
 		atk.setRotationRadians(irr::core::vector3df(0, 0, pcard->controler == 0 ? 0 : 3.1415926f));
 		driver->setTransform(irr::video::ETS_WORLD, atk);
 		driver->drawVertexPrimitiveList(matManager.vSymbol, 4, matManager.iRectangle, 2);
-	}
-	if(mainGame->chkEnablePScale->isChecked() && (pcard->type & TYPE_PENDULUM) && ((pcard->location & LOCATION_SZONE) && (pcard->sequence == 0 || pcard->sequence == 6))) {
-		int scale = pcard->lscale;
-		if(scale >= 0 && scale <= 20 && imageManager.tLScale[scale]) {
-			matManager.mTexture.setTexture(0, imageManager.tLScale[scale]);
-			driver->setMaterial(matManager.mTexture);
-			driver->drawVertexPrimitiveList(matManager.vPScale, 4, matManager.iRectangle, 2);
-		}
-	}
-	if(mainGame->chkEnablePScale->isChecked() && (pcard->type & TYPE_PENDULUM) && ((pcard->location & LOCATION_SZONE) && (pcard->sequence == 4 || pcard->sequence == 7))) {
-		int scale2 = pcard->rscale;
-		if(scale2 >= 0 && scale2 <= 20 && imageManager.tRScale[scale2]) {
-			matManager.mTexture.setTexture(0, imageManager.tRScale[scale2]);
-			driver->setMaterial(matManager.mTexture);
-			driver->drawVertexPrimitiveList(matManager.vPScale, 4, matManager.iRectangle, 2);
-		}
 	}
 }
 template<typename T>
@@ -641,32 +567,10 @@ void Game::DrawMisc() {
 		}
 	}
 	if(!dInfo.isReplay && dInfo.player_type < 7 && dInfo.time_limit) {
-		if(imageManager.tClock) {
-			driver->draw2DImage(imageManager.tClock, ResizeCardMid(579, 32, 597, 50, 597, 41), recti(0, 0, 34, 34), 0, 0, true);
-			driver->draw2DImage(imageManager.tClock, ResizeCardMid(695, 32, 713, 50, 713, 41), recti(0, 0, 34, 34), 0, 0, true);
-		}
-		DrawShadowText(numFont, dInfo.str_time_left[0], Resize(597, 32, 627, 51), rect<s32>(0, 1, 2, 0), dInfo.time_color[0], 0xff000000, true, false, 0);
-		DrawShadowText(numFont, dInfo.str_time_left[1], Resize(713, 32, 743, 51), rect<s32>(0, 1, 2, 0), dInfo.time_color[1], 0xff000000, true, false, 0);
-
-		driver->draw2DImage(imageManager.tHead[0], ResizeCardMid(541, 32, 559, 50, 559, 41), rect<s32>(0, 0, 160, 160), 0, 0, true);
-		driver->draw2DImage(imageManager.tHead[1], ResizeCardMid(746, 32, 764, 50, 764, 41), rect<s32>(0, 0, 160, 160), 0, 0, true);
-
-		DrawShadowText(numFont, dInfo.str_card_count[0], Resize(560, 32, 580, 51), Resize(0, 1, 2, 0), dInfo.card_count_color[0], 0xff000000, true, false, 0);
-		DrawShadowText(numFont, dInfo.str_card_count[1], Resize(765, 32, 781, 51), Resize(0, 1, 2, 0), dInfo.card_count_color[1], 0xff000000, true, false, 0);
-
-		/*
 		driver->draw2DRectangle(Resize(525, 34, 525 + dInfo.time_left[0] * 100 / dInfo.time_limit, 44), 0xa0e0e0e0, 0xa0e0e0e0, 0xa0c0c0c0, 0xa0c0c0c0);
 		driver->draw2DRectangleOutline(Resize(525, 34, 625, 44), 0xffffffff);
 		driver->draw2DRectangle(Resize(795 - dInfo.time_left[1] * 100 / dInfo.time_limit, 34, 795, 44), 0xa0e0e0e0, 0xa0e0e0e0, 0xa0c0c0c0, 0xa0c0c0c0);
 		driver->draw2DRectangleOutline(Resize(695, 34, 795, 44), 0xffffffff);
-		*/
-	}
-	else {
-		driver->draw2DImage(imageManager.tHead[0], ResizeCardMid(595, 32, 613, 50, 613, 41), rect<s32>(0, 0, 160, 160), 0, 0, true);
-		driver->draw2DImage(imageManager.tHead[1], ResizeCardMid(692, 32, 710, 50, 710, 41), rect<s32>(0, 0, 160, 160), 0, 0, true);
-
-		DrawShadowText(numFont, dInfo.str_card_count[0], Resize(614, 32, 632, 51), Resize(0, 1, 2, 0), dInfo.card_count_color[0], 0xff000000, true, false, 0);
-		DrawShadowText(numFont, dInfo.str_card_count[1], Resize(711, 32, 730, 51), Resize(0, 1, 2, 0), dInfo.card_count_color[1], 0xff000000, true, false, 0);
 	}
 	DrawShadowText(numFont, dInfo.strLP[0], Resize(330, 12, 631, 30), Resize(0, 1, 2, 0), 0xffffff00, 0xff000000, true, false, 0);
 	DrawShadowText(numFont, dInfo.strLP[1], Resize(691, 12, 992, 30), Resize(0, 1, 2, 0), 0xffffff00, 0xff000000, true, false, 0);
@@ -1063,9 +967,6 @@ void Game::DrawSpec() {
 			break;
 		}
 		}
-		if (auto_watch_mode && showcardcode < 8 && showcardcode > 0) {
-			mainGame->ShowCardInfo(showcardcode);
-		}
 	}
 	if(is_attacking) {
 		irr::core::matrix4 matk;
@@ -1289,18 +1190,6 @@ void Game::DrawDeckBd() {
 	DrawShadowText(numFont, dataManager.GetNumString(mainsize), Resize(380, 138, 440, 158), Resize(1, 1, 1, 1), 0xffffffff, 0xff000000, false, true);
 	driver->draw2DRectangle(Resize(310, 160, 797, deckBuilder.showing_pack ? 630 : 436), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 	driver->draw2DRectangleOutline(Resize(309, 159, 797, deckBuilder.showing_pack ? 630 : 436));
-	//type count 2DRectangle
-	driver->draw2DRectangle(Resize(638, 137, 797, 157), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
-	driver->draw2DRectangleOutline(Resize(637, 136, 797, 157));
-	//monster count
-	driver->draw2DImage(imageManager.tCardType[0], Resize(645, 137, (645+14), 157), rect<s32>(0, 0, 14, 20), 0, 0, true);
-	DrawShadowText(numFont, dataManager.numStrings[deckManager.GetTypeCount(deckManager.current_deck.main, TYPE_MONSTER)], Resize(670, 138, 690, 158), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false);
-	//spell count
-	driver->draw2DImage(imageManager.tCardType[1], Resize(695, 137, (695+14), 157), rect<s32>(0, 0, 14, 20), 0, 0, true);
-	DrawShadowText(numFont, dataManager.numStrings[deckManager.GetTypeCount(deckManager.current_deck.main, TYPE_SPELL)], Resize(720, 138, 740, 158), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false);
-    //trap count
-	driver->draw2DImage(imageManager.tCardType[2], Resize(745, 137, (745+14), 157), rect<s32>(0, 0, 14, 20), 0, 0, true);
-	DrawShadowText(numFont, dataManager.numStrings[deckManager.GetTypeCount(deckManager.current_deck.main, TYPE_TRAP)], Resize(770, 138, 790, 158), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false);
 	int lx;
 	int dy = 68;
 	float dx;
@@ -1335,21 +1224,6 @@ void Game::DrawDeckBd() {
 		DrawShadowText(numFont, dataManager.GetNumString(deckManager.current_deck.extra.size()), Resize(380, 441, 440, 461), Resize(1, 1, 1, 1), 0xffffffff, 0xff000000, false, true);
 		driver->draw2DRectangle(Resize(310, 463, 797, 533), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 		driver->draw2DRectangleOutline(Resize(309, 462, 797, 533));
-	//type count 2DRectangle
-	driver->draw2DRectangle(Resize(582, 440, 797, 460), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
-	driver->draw2DRectangleOutline(Resize(581, 439, 797, 460));
-	//fusion count
-	driver->draw2DImage(imageManager.tCardType[3], Resize(595, 440, (595+14), 460), rect<s32>(0, 0, 14, 20), 0, 0, true);
-	DrawShadowText(numFont, dataManager.numStrings[deckManager.GetTypeCount(deckManager.current_deck.extra, TYPE_FUSION)], Resize(620, 441, 640, 461), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false);
-	//synchro count
-	driver->draw2DImage(imageManager.tCardType[4], Resize(645, 440, (645+14), 460), rect<s32>(0, 0, 14, 20), 0, 0, true);
-	DrawShadowText(numFont, dataManager.numStrings[deckManager.GetTypeCount(deckManager.current_deck.extra, TYPE_SYNCHRO)], Resize(670, 441, 690, 461), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false);
-	//XYZ count
-	driver->draw2DImage(imageManager.tCardType[5], Resize(695, 440, (695+14), 460), rect<s32>(0, 0, 14, 20), 0, 0, true);
-	DrawShadowText(numFont, dataManager.numStrings[deckManager.GetTypeCount(deckManager.current_deck.extra, TYPE_XYZ)], Resize(720, 441, 740, 461), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false);
-	//link count
-	driver->draw2DImage(imageManager.tCardType[6], Resize(745, 440, (745+14), 460), rect<s32>(0, 0, 14, 20), 0, 0, true);
-	DrawShadowText(numFont, dataManager.numStrings[deckManager.GetTypeCount(deckManager.current_deck.extra, TYPE_LINK)], Resize(770, 441, 790, 461), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false);
 		if(deckManager.current_deck.extra.size() <= 10)
 			dx = 436.0f / 9;
 		else dx = 436.0f / (deckManager.current_deck.extra.size() - 1);
@@ -1363,18 +1237,6 @@ void Game::DrawDeckBd() {
 		driver->draw2DRectangleOutline(Resize(309, 536, 410, 557));
 		DrawShadowText(textFont, dataManager.GetSysString(1332), Resize(315, 537, 410, 557), Resize(1, 1, 1, 1), 0xffffffff, 0xff000000, false, true);
 		DrawShadowText(numFont, dataManager.GetNumString(deckManager.current_deck.side.size()), Resize(380, 538, 440, 558), Resize(1, 1, 1, 1), 0xffffffff, 0xff000000, false, true);
-	//type count 2DRectangle
-	driver->draw2DRectangle(Resize(638, 537, 797, 557), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
-	driver->draw2DRectangleOutline(Resize(637, 536, 797, 557));
-	//monster count
-	driver->draw2DImage(imageManager.tCardType[0], Resize(645, 537, (645+14), 557), rect<s32>(0, 0, 14, 20), 0, 0, true);
-	DrawShadowText(numFont, dataManager.numStrings[deckManager.GetTypeCount(deckManager.current_deck.side, TYPE_MONSTER)], Resize(670, 538, 690, 558), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false);
-	//spell count
-	driver->draw2DImage(imageManager.tCardType[1], Resize(695, 537, (695+14), 557), rect<s32>(0, 0, 14, 20), 0, 0, true);
-	DrawShadowText(numFont, dataManager.numStrings[deckManager.GetTypeCount(deckManager.current_deck.side, TYPE_SPELL)], Resize(720, 538, 740, 558), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false);
-    //trap count
-	driver->draw2DImage(imageManager.tCardType[2], Resize(745, 537, (745+14), 557), rect<s32>(0, 0, 14, 20), 0, 0, true);
-	DrawShadowText(numFont, dataManager.numStrings[deckManager.GetTypeCount(deckManager.current_deck.side, TYPE_TRAP)], Resize(770, 538, 790, 558), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false);
 		driver->draw2DRectangle(Resize(310, 560, 797, 630), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 		driver->draw2DRectangleOutline(Resize(309, 559, 797, 630));
 		if(deckManager.current_deck.side.size() <= 10)

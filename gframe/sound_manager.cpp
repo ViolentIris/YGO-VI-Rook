@@ -69,9 +69,7 @@ void SoundManager::RefreshBGMList() {
 }
 void SoundManager::RefershBGMDir(std::wstring path, int scene) {
 #ifdef YGOPRO_USE_AUDIO
-	wchar_t soundT[256];
-	myswprintf(soundT, L"./sound/%ls/", mainGame->gameConf.soundtheme);
-	std::wstring search = soundT + path;
+	std::wstring search = L"./sound/BGM/" + path;
 	FileSystem::TraversalDir(search.c_str(), [this, &path, scene](const wchar_t* name, bool isdir) {
 		if(!isdir && (
 			IsExtension(name, L".mp3")
@@ -90,7 +88,6 @@ void SoundManager::PlaySoundEffect(int sound) {
 #ifdef YGOPRO_USE_AUDIO
 	if(!mainGame->chkEnableSound->isChecked())
 		return;
-	SetSoundVolume(mainGame->gameConf.sound_volume);	
 	char soundName[32];
 	switch(sound) {
 	case SOUND_SUMMON: {
@@ -222,6 +219,7 @@ void SoundManager::PlaySoundEffect(int sound) {
 	}
 	char soundPath[40];
 	std::snprintf(soundPath, 40, "./sound/%s.wav", soundName);
+	SetSoundVolume(mainGame->gameConf.sound_volume);
 #ifdef YGOPRO_USE_MINIAUDIO
 	ma_engine_play_sound(&engineSound, soundPath, nullptr);
 #endif
@@ -323,20 +321,6 @@ void SoundManager::StopBGM() {
 #endif
 #ifdef YGOPRO_USE_IRRKLANG
 	engineMusic->stopAllSounds();
-#endif
-}
-void SoundManager::StopSound() {
-#ifdef YGOPRO_USE_MINIAUDIO
-	for(int i = 0; i < 10; i++) {
-		if(playingSoundEffect[i]) {
-			ma_sound_uninit(playingSoundEffect[i]);
-			free(playingSoundEffect[i]);
-			playingSoundEffect[i] = nullptr;
-		}
-	}
-#endif
-#ifdef YGOPRO_USE_IRRKLANG
-	engineSound->stopAllSounds();
 #endif
 }
 void SoundManager::SetSoundVolume(double volume) {
