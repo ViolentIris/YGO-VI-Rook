@@ -186,6 +186,8 @@ public:
 	void InitStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::u32 cHeight, irr::gui::CGUITTFont* font, const wchar_t* text);
 	std::wstring SetStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::gui::CGUITTFont* font, const wchar_t* text, irr::u32 pos = 0);
 	void LoadExpansions();
+	std::vector<std::wstring> GetExpansionsList(const wchar_t * suffix = nullptr);
+	std::vector<std::string> GetExpansionsListU(const char* suffix = nullptr);
 	void RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck, bool selectlastused = true);
 	void RefreshDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck);
 	void RefreshDeck(const wchar_t* deckpath, const std::function<void(const wchar_t*)>& additem);
@@ -231,6 +233,8 @@ public:
 	int OppositePlayer(int player);
 	int ChatLocalPlayer(int player);
 	const wchar_t* LocalName(int local_player);
+	const char* GetLocaleDir(const char* dir);
+	const wchar_t* GetLocaleDirWide(const char* dir);
 	bool CheckRegEx(const std::wstring& text, const std::wstring& exp, bool exact = false);
 
 	bool HasFocus(irr::gui::EGUI_ELEMENT_TYPE type) const {
