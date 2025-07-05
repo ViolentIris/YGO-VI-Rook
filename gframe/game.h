@@ -71,6 +71,7 @@ struct Config {
 	wchar_t textfont[256]{};
 	wchar_t numfont[256]{};
 	wchar_t bot_deck_path[256]{};
+	wchar_t locale[64];
 	//settings
 	int chkMAutoPos{ 0 };
 	int chkSTAutoPos{ 1 };
@@ -185,7 +186,8 @@ public:
 	void BuildProjectionMatrix(irr::core::matrix4& mProjection, irr::f32 left, irr::f32 right, irr::f32 bottom, irr::f32 top, irr::f32 znear, irr::f32 zfar);
 	void InitStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::u32 cHeight, irr::gui::CGUITTFont* font, const wchar_t* text);
 	std::wstring SetStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::gui::CGUITTFont* font, const wchar_t* text, irr::u32 pos = 0);
-	void LoadExpansions();
+	void LoadExpansions(const wchar_t* expansions_path);
+	void LoadExpansionsAll();
 	std::vector<std::wstring> GetExpansionsList(const wchar_t * suffix = nullptr);
 	std::vector<std::string> GetExpansionsListU(const char* suffix = nullptr);
 	void RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck, bool selectlastused = true);
@@ -194,6 +196,7 @@ public:
 	void RefreshReplay();
 	void RefreshSingleplay();
 	void RefreshBot();
+	void RefreshLocales();
 	void DrawSelectionLine(irr::video::S3DVertex* vec, bool strip, int width, float* cv);
 	void DrawSelectionLine(irr::gui::IGUIElement* element, int width, irr::video::SColor color);
 	void DrawBackGround();
@@ -396,6 +399,7 @@ public:
 	irr::gui::IGUIButton* btnWinResizeL;
 	irr::gui::IGUIButton* btnWinResizeXL;
 	irr::gui::IGUICheckBox* chkEnablePScale;
+	irr::gui::IGUIComboBox* cbLocale;
 	//main menu
 	irr::gui::IGUIWindow* wMainMenu;
 	irr::gui::IGUIButton* btnLanMode;
@@ -809,6 +813,7 @@ extern Game* mainGame;
 #define BUTTON_DISPLAY_4			294
 #define SCROLL_CARD_DISPLAY			295
 #define BUTTON_CARD_DISP_OK			296
+
 #define BUTTON_SURRENDER_YES		297
 #define BUTTON_SURRENDER_NO			298
 
@@ -876,6 +881,7 @@ extern Game* mainGame;
 #define CHECKBOX_LFLIST				375
 #define CHECKBOX_HIDE_PLAYER_NAME	376
 #define CHECKBOX_REGEX				377
+#define COMBOBOX_LOCALE				378
 #define CHECKBOX_ASK_MSET			379
 
 #define TEXTURE_DUEL				0
@@ -885,6 +891,7 @@ extern Game* mainGame;
 #define TEXTURE_COVER_O				4
 #define TEXTURE_ATTACK				5
 #define TEXTURE_ACTIVATE			6
+
 #define AVAIL_OCG					0x1
 #define AVAIL_TCG					0x2
 #define AVAIL_CUSTOM				0x4

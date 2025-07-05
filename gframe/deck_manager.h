@@ -5,6 +5,7 @@
 #include <vector>
 #include <sstream>
 #include "data_manager.h"
+#include "bufferio.h"
 
 #ifndef YGOPRO_MAX_DECK
 #define YGOPRO_MAX_DECK					60
@@ -74,6 +75,7 @@ public:
 	bool LoadCurrentDeck(const wchar_t* file, bool is_packlist = false);
 	bool LoadCurrentDeck(int category_index, const wchar_t* category_name, const wchar_t* deckname);
 	bool LoadCurrentDeck(std::istringstream& deckStream, bool is_packlist = false);
+	wchar_t DeckFormatBuffer[128];
 
 	static uint32_t LoadDeck(Deck& deck, uint32_t dbuf[], int mainc, int sidec, bool is_packlist = false);
 	static uint32_t LoadDeckFromStream(Deck& deck, std::istringstream& deckStream, bool is_packlist = false);
@@ -94,7 +96,7 @@ private:
 	template<typename LineProvider>
 	void _LoadLFListFromLineProvider(LineProvider getLine, bool insert = false) {
 		std::vector<LFList> loadedLists;
-		auto cur = loadedLists.rend(); // 注意：在临时 list 上操作
+		auto cur = loadedLists.rend();
 		char line[256]{};
 		wchar_t strBuffer[256]{};
 		char str1[16]{};
