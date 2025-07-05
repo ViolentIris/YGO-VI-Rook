@@ -1,4 +1,3 @@
-#include <irrlicht.h>
 #include "config.h"
 #include "game.h"
 #include "myfilesystem.h"

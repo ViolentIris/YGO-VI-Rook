@@ -63,6 +63,7 @@ int SingleMode::SinglePlayThread() {
 	mainGame->dInfo.clientname[0] = 0;
 	mainGame->dInfo.player_type = 0;
 	mainGame->dInfo.turn = 0;
+	mainGame->dInfo.announce_cache.clear();
 	if(mainGame->chkSinglePlayReturnDeckTop->isChecked())
 		opt |= DUEL_RETURN_DECK_TOP;
 	char filename[256]{};
