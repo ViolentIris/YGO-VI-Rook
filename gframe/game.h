@@ -151,7 +151,6 @@ struct DuelInfo {
 	video::SColor card_count_color[2]{};
 	video::SColor total_attack_color[2]{};
 	std::vector<unsigned int> announce_cache;
-
 	void Clear();
 };
 
