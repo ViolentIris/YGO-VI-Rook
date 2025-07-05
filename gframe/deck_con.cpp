@@ -1199,7 +1199,6 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			if(mainGame->env->hasFocus(mainGame->scrFilter))
 				break;
-			irr::gui::IGUIElement* root = mainGame->env->getRootGUIElement();
 			if(root->getElementFromPoint(mouse_pos) != root)
 				break;
 			if(event.MouseInput.Wheel < 0) {
@@ -1511,6 +1510,7 @@ void DeckBuilder::FilterCards() {
 			} else {
 				match = CardNameContains(text.name.c_str(), elements_iterator->keyword.c_str())
 					|| text.text.find(elements_iterator->keyword) != std::wstring::npos
+					|| mainGame->CheckRegEx(text.text, elements_iterator->keyword)
 					|| data.is_setcodes(elements_iterator->setcodes);
 			}
 			if(elements_iterator->exclude)
@@ -1578,7 +1578,7 @@ void DeckBuilder::SortList() {
 	auto left = results.begin();
 	const wchar_t* pstr = mainGame->ebCardName->getText();
 	for(auto it = results.begin(); it != results.end(); ++it) {
-		if(std::wcscmp(pstr, dataManager.GetName((*it)->first)) == 0) {
+		if(std::wcscmp(pstr, dataManager.GetName((*it)->first)) == 0 || mainGame->CheckRegEx(dataManager.GetName((*it)->first), pstr, true)) {
 			std::iter_swap(left, it);
 			++left;
 		}
@@ -1699,6 +1699,8 @@ bool DeckBuilder::CardNameContains(const wchar_t* haystack, const wchar_t* needl
 	if(!haystack) {
 		return false;
 	}
+	if(mainGame->CheckRegEx(haystack, needle))
+		return true;
 	int i = 0;
 	int j = 0;
 	while(haystack[i]) {

@@ -8,41 +8,39 @@ namespace ygo {
 char DeckManager::deckBuffer[0x10000]{};
 DeckManager deckManager;
 
-void DeckManager::LoadLFListSingle(const char* path) {
-	auto cur = _lfList.rend();
+void DeckManager::LoadLFListSingle(const char* path, bool insert) {
 	FILE* fp = myfopen(path, "r");
-	char linebuf[256]{};
-	wchar_t strBuffer[256]{};
-	char str1[16]{};
-	if(fp) {
-		while(std::fgets(linebuf, sizeof linebuf, fp)) {
-			if(linebuf[0] == '#')
-				continue;
-			if(linebuf[0] == '!') {
-				auto len = std::strcspn(linebuf, "\r\n");
-				linebuf[len] = 0;
-				BufferIO::DecodeUTF8(&linebuf[1], strBuffer);
-				LFList newlist;
-				newlist.listName = strBuffer;
-				newlist.hash = 0x7dfcee6a;
-				_lfList.push_back(newlist);
-				cur = _lfList.rbegin();
-				continue;
+	if (!fp) return;
+	_LoadLFListFromLineProvider([&](char* buf, size_t sz) {
+		return std::fgets(buf, sz, fp) != nullptr;
+	}, insert);
+	std::fclose(fp);
+}
+void DeckManager::LoadLFListSingle(const wchar_t* path, bool insert) {
+	FILE* fp = mywfopen(path, "r");
+	if (!fp) return;
+	_LoadLFListFromLineProvider([&](char* buf, size_t sz) {
+		return std::fgets(buf, sz, fp) != nullptr;
+	}, insert);
+	std::fclose(fp);
+}
+void DeckManager::LoadLFListSingle(irr::io::IReadFile* reader, bool insert) {
+	std::string linebuf;
+	char ch{};
+	_LoadLFListFromLineProvider([&](char* buf, size_t sz) {
+		while (reader->read(&ch, 1)) {
+			if (ch == '\0') break;
+			linebuf.push_back(ch);
+			if (ch == '\n' || linebuf.size() >= sz - 1) {
+				std::strncpy(buf, linebuf.c_str(), sz - 1);
+				buf[sz - 1] = '\0';
+				linebuf.clear();
+				return true;
 			}
-			if (cur == _lfList.rend())
-				continue;
-			unsigned int code = 0;
-			int count = -1;
-			if (std::sscanf(linebuf, "%10s%*[ ]%1d", str1, &count) != 2)
-				continue;
-			if (count < 0 || count > 2)
-				continue;
-			code = std::strtoul(str1, nullptr, 10);
-			cur->content[code] = count;
-			cur->hash = cur->hash ^ ((code << 18) | (code >> 14)) ^ ((code << (27 + count)) | (code >> (5 - count)));
 		}
-		std::fclose(fp);
-	}
+		return false;
+	}, insert);
+	reader->drop();
 }
 void DeckManager::LoadLFList() {
 	LoadLFListSingle("expansions/lflist.conf");
@@ -69,6 +67,8 @@ const LFList* DeckManager::GetLFList(unsigned int lfhash) {
 	return nullptr;
 }
 static unsigned int checkAvail(unsigned int ot, unsigned int avail) {
+	if(!!(ot & 0x4))
+		return 0;
 	if((ot & avail) == avail)
 		return 0;
 	if((ot & AVAIL_OCG) && (avail != AVAIL_OCG))
@@ -218,17 +218,21 @@ bool DeckManager::LoadSide(Deck& deck, uint32_t dbuf[], int mainc, int sidec) {
 		pcount[deck.side[i]->first]++;
 	Deck ndeck;
 	LoadDeck(ndeck, dbuf, mainc, sidec);
-	if (ndeck.main.size() != deck.main.size() || ndeck.extra.size() != deck.extra.size() || ndeck.side.size() != deck.side.size())
+#ifndef YGOPRO_NO_SIDE_CHECK
+	if(ndeck.main.size() != deck.main.size() || ndeck.extra.size() != deck.extra.size() || ndeck.side.size() != deck.side.size())
 		return false;
+#endif
 	for(size_t i = 0; i < ndeck.main.size(); ++i)
 		ncount[ndeck.main[i]->first]++;
 	for(size_t i = 0; i < ndeck.extra.size(); ++i)
 		ncount[ndeck.extra[i]->first]++;
 	for(size_t i = 0; i < ndeck.side.size(); ++i)
 		ncount[ndeck.side[i]->first]++;
+#ifndef YGOPRO_NO_SIDE_CHECK
 	for (auto& cdit : ncount)
 		if (cdit.second != pcount[cdit.first])
 			return false;
+#endif
 	deck = ndeck;
 	return true;
 }
@@ -341,6 +345,15 @@ bool DeckManager::SaveDeck(const Deck& deck, const wchar_t* file) {
 }
 bool DeckManager::DeleteDeck(const wchar_t* file) {
 	return FileSystem::RemoveFile(file);
+}
+int DeckManager::TypeCount(std::vector<code_pointer> list, unsigned int ctype) {
+	int res = 0;
+	for(size_t i = 0; i < list.size(); ++i) {
+		code_pointer cur = list[i];
+		if(cur->second.type & ctype)
+			res++;
+	}
+	return res;
 }
 bool DeckManager::CreateCategory(const wchar_t* name) {
 	if(!FileSystem::IsDirExists(L"./deck") && !FileSystem::MakeDir(L"./deck"))

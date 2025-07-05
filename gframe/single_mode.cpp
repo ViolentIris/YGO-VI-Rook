@@ -190,6 +190,17 @@ bool SingleMode::SinglePlayAnalyze(unsigned char* msg, unsigned int len) {
 		offset = pbuf;
 		mainGame->dInfo.curMsg = BufferIO::ReadUInt8(pbuf);
 		switch (mainGame->dInfo.curMsg) {
+		case MSG_RESET_TIME: {
+			pbuf += 3;
+			break;
+		}
+		case MSG_UPDATE_CARD: {
+			pbuf += 3;
+			const int clen = BufferIO::ReadInt32(pbuf);
+			pbuf += (clen - 4);
+			DuelClient::ClientAnalyze(offset, pbuf - offset);
+			break;
+		}
 		case MSG_RETRY: {
 			if(!DuelClient::ClientAnalyze(offset, pbuf - offset)) {
 				mainGame->singleSignal.Reset();

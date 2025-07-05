@@ -34,6 +34,10 @@ private:
 	static std::set<std::pair<unsigned int, unsigned short>> remotes;
 
 public:
+	static unsigned int temp_ip;
+	static unsigned short temp_port;
+	static unsigned short temp_ver;
+	static bool try_needed;
 	static unsigned char selftype;
 	static bool StartClient(unsigned int ip, unsigned short port, bool create_game = true);
 	static void ConnectTimeout(evutil_socket_t fd, short events, void* arg);
@@ -51,6 +55,9 @@ public:
 		auto p = duel_client_write;
 		buffer_write<uint16_t>(p, 1);
 		buffer_write<uint8_t>(p, proto);
+#ifdef YGOPRO_MESSAGE_DEBUG
+		printf("CTOS: %d\n", proto);
+#endif
 		bufferevent_write(client_bev, duel_client_write, 3);
 	}
 	template<typename ST>
@@ -60,6 +67,9 @@ public:
 		buffer_write<uint16_t>(p, (uint16_t)(1 + sizeof(ST)));
 		buffer_write<uint8_t>(p, proto);
 		std::memcpy(p, &st, sizeof(ST));
+#ifdef YGOPRO_MESSAGE_DEBUG
+		printf("CTOS: %d Length: %ld\n", proto, sizeof(ST));
+#endif
 		bufferevent_write(client_bev, duel_client_write, sizeof(ST) + 3);
 	}
 	static void SendBufferToServer(unsigned char proto, void* buffer, size_t len) {
@@ -69,10 +79,15 @@ public:
 		buffer_write<uint16_t>(p, (uint16_t)(1 + len));
 		buffer_write<uint8_t>(p, proto);
 		std::memcpy(p, buffer, len);
+#ifdef YGOPRO_MESSAGE_DEBUG
+		printf("CTOS: %d Length: %ld\n", proto, len);
+#endif
 		bufferevent_write(client_bev, duel_client_write, len + 3);
 	}
 
-	static std::vector<HostPacket> hosts;
+	static std::vector<std::wstring> hosts;
+	static std::vector<std::wstring> hosts_srvpro;
+	static bool is_srvpro;
 	static void BeginRefreshHost();
 	static int RefreshThread(event_base* broadev);
 	static void BroadcastReply(evutil_socket_t fd, short events, void* arg);

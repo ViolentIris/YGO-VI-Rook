@@ -55,6 +55,7 @@ struct Config {
 #else
 	bool use_image_load_background_thread{ true };
 #endif
+	bool freever{ true };
 	unsigned short antialias{ 0 };
 	unsigned short serverport{ 7911 };
 	unsigned char textfontsize{ 14 };
@@ -106,6 +107,10 @@ struct Config {
 	int window_width{ 1024 };
 	int window_height{ 640 };
 	bool resize_popup_menu{ false };
+	int search_regex{ 0 };
+	int chkEnablePScale{ 1 };
+	int skin_index { -1 };
+	int ask_mset{ 0 };
 };
 
 struct DuelInfo {
@@ -118,10 +123,13 @@ struct DuelInfo {
 	bool isTag{ false };
 	bool isSingleMode{ false };
 	bool is_shuffling{ false };
+	bool is_swapped{ false };
 	bool tag_player[2]{};
 	bool isReplaySwapped{ false };
 	int lp[2]{};
 	int start_lp{ 0 };
+	int card_count[2]{};
+	int total_attack[2]{};
 	int duel_rule{ 0 };
 	int turn{ 0 };
 	short curMsg{ 0 };
@@ -135,6 +143,13 @@ struct DuelInfo {
 	unsigned char time_player{ 0 };
 	unsigned short time_limit{ 0 };
 	unsigned short time_left[2]{};
+	wchar_t str_time_left[2][16]{};
+	video::SColor time_color[2]{};
+	wchar_t str_card_count[2][16]{};
+	wchar_t str_total_attack[2][16]{};
+	video::SColor card_count_color[2]{};
+	video::SColor total_attack_color[2]{};
+	std::vector<unsigned int> announce_cache;
 
 	void Clear();
 };
@@ -166,6 +181,7 @@ class Game {
 public:
 	bool Initialize();
 	void MainLoop();
+	void RefreshTimeDisplay();
 	void BuildProjectionMatrix(irr::core::matrix4& mProjection, irr::f32 left, irr::f32 right, irr::f32 bottom, irr::f32 top, irr::f32 znear, irr::f32 zfar);
 	void InitStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::u32 cHeight, irr::gui::CGUITTFont* font, const wchar_t* text);
 	std::wstring SetStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::gui::CGUITTFont* font, const wchar_t* text, irr::u32 pos = 0);
@@ -180,6 +196,7 @@ public:
 	void DrawSelectionLine(irr::gui::IGUIElement* element, int width, irr::video::SColor color);
 	void DrawBackGround();
 	void DrawLinkedZones(ClientCard* pcard);
+	void DrawSpellLinkedZones(ClientCard* pcard);
 	void CheckMutual(ClientCard* pcard, int mark);
 	void DrawCards();
 	void DrawCard(ClientCard* pcard);
@@ -194,6 +211,7 @@ public:
 	void WaitFrameSignal(int frame);
 	void DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lflist, bool drag = false);
 	void DrawDeckBd();
+	bool LoadConfigFromFile(const char* file);
 	void LoadConfig();
 	void SaveConfig();
 	void ShowCardInfo(int code, bool resize = false);
@@ -203,6 +221,7 @@ public:
 	void ClearChatMsg();
 	void AddDebugMsg(const char* msgbuf);
 	void ErrorLog(const char* msgbuf);
+	void initUtils();
 	void ClearTextures();
 	void CloseGameButtons();
 	void CloseGameWindow();
@@ -212,6 +231,7 @@ public:
 	int OppositePlayer(int player);
 	int ChatLocalPlayer(int player);
 	const wchar_t* LocalName(int local_player);
+	bool CheckRegEx(const std::wstring& text, const std::wstring& exp, bool exact = false);
 
 	bool HasFocus(irr::gui::EGUI_ELEMENT_TYPE type) const {
 		irr::gui::IGUIElement* focus = env->getFocus();
@@ -242,6 +262,7 @@ public:
 	void SetWindowsIcon();
 	void SetWindowsScale(float scale);
 	void FlashWindow();
+	void takeScreenshot();
 	void SetCursor(irr::gui::ECURSOR_ICON icon);
 	template<typename T>
 	static void DrawShadowText(irr::gui::CGUITTFont* font, const T& text, const irr::core::rect<irr::s32>& position, const irr::core::rect<irr::s32>& padding,
@@ -310,6 +331,7 @@ public:
 	HWND hWnd;
 #endif
 
+	std::vector<irr::gui::IGUIEditBox* > editbox_list;
 	//GUI
 	irr::gui::IGUIEnvironment* env;
 	irr::gui::CGUITTFont* guiFont;
@@ -348,6 +370,7 @@ public:
 	irr::gui::IGUICheckBox* chkQuickAnimation;
 	irr::gui::IGUICheckBox* chkAutoSaveReplay;
 	irr::gui::IGUICheckBox* chkDrawSingleChain;
+	irr::gui::IGUICheckBox* chkAskMSet;
 	irr::gui::IGUICheckBox* chkHidePlayerName;
 	irr::gui::IGUIWindow* tabSystem;
 	irr::gui::IGUIElement* elmTabSystemLast;
@@ -356,6 +379,7 @@ public:
 	irr::gui::IGUICheckBox* chkAutoSearch;
 	irr::gui::IGUICheckBox* chkMultiKeywords;
 	irr::gui::IGUICheckBox* chkPreferExpansionScript;
+	irr::gui::IGUICheckBox* chkRegex;
 	irr::gui::IGUICheckBox* chkLFlist;
 	irr::gui::IGUIComboBox* cbLFlist;
 	irr::gui::IGUICheckBox* chkEnableSound;
@@ -367,6 +391,7 @@ public:
 	irr::gui::IGUIButton* btnWinResizeM;
 	irr::gui::IGUIButton* btnWinResizeL;
 	irr::gui::IGUIButton* btnWinResizeXL;
+	irr::gui::IGUICheckBox* chkEnablePScale;
 	//main menu
 	irr::gui::IGUIWindow* wMainMenu;
 	irr::gui::IGUIButton* btnLanMode;
@@ -846,7 +871,16 @@ extern Game* mainGame;
 #define CHECKBOX_DRAW_SINGLE_CHAIN	374
 #define CHECKBOX_LFLIST				375
 #define CHECKBOX_HIDE_PLAYER_NAME	376
+#define CHECKBOX_REGEX				377
+#define CHECKBOX_ASK_MSET			379
 
+#define TEXTURE_DUEL				0
+#define TEXTURE_DECK				1
+#define TEXTURE_MENU				2
+#define TEXTURE_COVER_S				3
+#define TEXTURE_COVER_O				4
+#define TEXTURE_ATTACK				5
+#define TEXTURE_ACTIVATE			6
 #define AVAIL_OCG					0x1
 #define AVAIL_TCG					0x2
 #define AVAIL_CUSTOM				0x4

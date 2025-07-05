@@ -4,15 +4,19 @@
 #include <event2/thread.h>
 #include <clocale>
 #include <memory>
+
 #ifdef __APPLE__
 #import <CoreFoundation/CoreFoundation.h>
 #endif
 
 unsigned int enable_log = 0x3;
 bool exit_on_return = false;
+bool auto_watch_mode = false;
 bool open_file = false;
 wchar_t open_file_name[256] = L"";
 bool bot_mode = false;
+bool expansions_specified = false;
+std::vector<std::wstring> expansions_list;
 
 void ClickButton(irr::gui::IGUIElement* btn) {
 	irr::SEvent event;
@@ -85,6 +89,7 @@ int main(int argc, char* argv[]) {
 
 	bool keep_on_return = false;
 	bool deckCategorySpecified = false;
+	expansions_list.push_back(L"./expansions");
 	for(int i = 1; i < wargc; ++i) {
 		if (wargc == 2 && std::wcslen(wargv[1]) >= 4) {
 			wchar_t* pstrext = wargv[1] + std::wcslen(wargv[1]) - 4;
@@ -121,8 +126,9 @@ int main(int argc, char* argv[]) {
 			continue;
 		} else if(!std::wcscmp(wargv[i], L"-h")) { // Host address
 			++i;
-			if(i < wargc)
+			if(i < wargc) {
 				ygo::mainGame->ebJoinHost->setText(wargv[i]);
+			}
 			continue;
 		} else if(!std::wcscmp(wargv[i], L"-p")) { // host Port
 			++i;
@@ -137,6 +143,8 @@ int main(int argc, char* argv[]) {
 		} else if(!std::wcscmp(wargv[i], L"-k")) { // Keep on return
 			exit_on_return = false;
 			keep_on_return = true;
+		} else if(!std::wcscmp(wargv[i], L"--auto-watch")) { // Auto watch mode
+			auto_watch_mode = true;
 		} else if(!std::wcscmp(wargv[i], L"--deck-category")) {
 			++i;
 			if(i < wargc) {
@@ -199,6 +207,16 @@ int main(int argc, char* argv[]) {
 			if(open_file)
 				ClickButton(ygo::mainGame->btnLoadSinglePlay);
 			break;
+		} else if(!std::wcscmp(wargv[i], L"--expansions")) { // specify expansions
+			++i;
+			if(i < wargc) {
+				if(!expansions_specified) {
+					expansions_list.clear();
+					expansions_specified = true;
+				}
+				expansions_list.push_back(wargv[i]);
+			}
+			continue;
 		}
 	}
 	ygo::mainGame->MainLoop();

@@ -1321,6 +1321,8 @@ void Game::LoadConfig() {
 			gameConf.use_image_scale_multi_thread = std::strtol(valbuf, nullptr, 10) > 0;
 		} else if (!std::strcmp(strbuf, "use_image_load_background_thread")) {
 			gameConf.use_image_load_background_thread = std::strtol(valbuf, nullptr, 10) > 0;
+		} else if(!std::strcmp(strbuf, "freever")) {
+			gameConf.freever = std::strtol(valbuf, nullptr, 10) > 0;
 		} else if(!std::strcmp(strbuf, "errorlog")) {
 			unsigned int val = std::strtol(valbuf, nullptr, 10);
 			enable_log = val & 0xff;
@@ -1370,6 +1372,8 @@ void Game::LoadConfig() {
 			gameConf.auto_search_limit = std::strtol(valbuf, nullptr, 10);
 		} else if(!std::strcmp(strbuf, "search_multiple_keywords")) {
 			gameConf.search_multiple_keywords = std::strtol(valbuf, nullptr, 10);
+		} else if(!std::strcmp(strbuf, "search_regex")) {
+			gameConf.search_regex = std::strtol(valbuf, nullptr, 10);
 		} else if(!std::strcmp(strbuf, "ignore_deck_changes")) {
 			gameConf.chkIgnoreDeckChanges = std::strtol(valbuf, nullptr, 10);
 		} else if(!std::strcmp(strbuf, "default_ot")) {
@@ -1386,6 +1390,8 @@ void Game::LoadConfig() {
 			gameConf.hide_player_name = std::strtol(valbuf, nullptr, 10);
 		} else if(!std::strcmp(strbuf, "prefer_expansion_script")) {
 			gameConf.prefer_expansion_script = std::strtol(valbuf, nullptr, 10);
+		} else if(!std::strcmp(strbuf, "ask_mset")) {
+			gameConf.ask_mset = std::strtol(valbuf, nullptr, 10);
 		} else if(!std::strcmp(strbuf, "window_maximized")) {
 			gameConf.window_maximized = std::strtol(valbuf, nullptr, 10) > 0;
 		} else if(!std::strcmp(strbuf, "window_width")) {
@@ -1416,6 +1422,8 @@ void Game::LoadConfig() {
 		} else if(!std::strcmp(strbuf, "music_mode")) {
 			gameConf.music_mode = std::strtol(valbuf, nullptr, 10);
 #endif
+		} else if(!std::strcmp(strbuf, "enable_pendulum_scale")) {
+			gameConf.chkEnablePScale = strtol(valbuf, nullptr, 10);
 		} else {
 			// options allowing multiple words
 			if (std::sscanf(linebuf, "%63s = %959[^\n]", strbuf, valbuf) != 2)
@@ -1456,6 +1464,7 @@ void Game::SaveConfig() {
 	std::fprintf(fp, "use_image_scale = %d\n", gameConf.use_image_scale ? 1 : 0);
 	std::fprintf(fp, "use_image_scale_multi_thread = %d\n", gameConf.use_image_scale_multi_thread ? 1 : 0);
 	std::fprintf(fp, "use_image_load_background_thread = %d\n", gameConf.use_image_load_background_thread ? 1 : 0);
+	std::fprintf(fp, "freever = %d\n", gameConf.freever ? 1 : 0);
 	std::fprintf(fp, "antialias = %d\n", gameConf.antialias);
 	std::fprintf(fp, "errorlog = %u\n", enable_log);
 	std::fprintf(fp, "game_version = %d\n", gameConf.game_version);
@@ -1499,6 +1508,7 @@ void Game::SaveConfig() {
 	std::fprintf(fp, "auto_search_limit = %d\n", gameConf.auto_search_limit);
 	std::fprintf(fp, "#search_multiple_keywords = 0: Disable. 1: Search mutiple keywords with separator \" \". 2: with separator \"+\"\n");
 	std::fprintf(fp, "search_multiple_keywords = %d\n", gameConf.search_multiple_keywords);
+	std::fprintf(fp, "search_regex = %d\n", gameConf.search_regex);
 	std::fprintf(fp, "ignore_deck_changes = %d\n", (chkIgnoreDeckChanges->isChecked() ? 1 : 0));
 	std::fprintf(fp, "default_ot = %d\n", gameConf.defaultOT);
 	std::fprintf(fp, "enable_bot_mode = %d\n", gameConf.enable_bot_mode);
@@ -1509,6 +1519,7 @@ void Game::SaveConfig() {
 	std::fprintf(fp, "draw_single_chain = %d\n", gameConf.draw_single_chain);
 	std::fprintf(fp, "hide_player_name = %d\n", gameConf.hide_player_name);
 	std::fprintf(fp, "prefer_expansion_script = %d\n", gameConf.prefer_expansion_script);
+	std::fprintf(fp, "ask_mset = %d\n", gameConf.ask_mset);
 	std::fprintf(fp, "window_maximized = %d\n", (gameConf.window_maximized ? 1 : 0));
 	std::fprintf(fp, "window_width = %d\n", gameConf.window_width);
 	std::fprintf(fp, "window_height = %d\n", gameConf.window_height);
@@ -1523,6 +1534,7 @@ void Game::SaveConfig() {
 	std::fprintf(fp, "music_volume = %d\n", vol);
 	std::fprintf(fp, "music_mode = %d\n", (chkMusicMode->isChecked() ? 1 : 0));
 #endif
+	std::fprintf(fp, "enable_pendulum_scale = %d\n", ((mainGame->chkEnablePScale->isChecked()) ? 1 : 0));
 	std::fclose(fp);
 }
 void Game::ShowCardInfo(int code, bool resize) {
@@ -1727,6 +1739,44 @@ void Game::ErrorLog(const char* msg) {
 	std::fprintf(fp, "[%s]%s\n", timebuf, msg);
 	std::fclose(fp);
 }
+void Game::initUtils() {
+	//files in ygopro-starter-pack
+	FileSystem::MakeDir("deck");
+	FileSystem::MakeDir("single");
+	//original files
+	FileSystem::MakeDir("script");
+	FileSystem::MakeDir("skin");
+	FileSystem::MakeDir("textures");
+	//subdirs in textures
+	FileSystem::MakeDir("textures/act");
+	FileSystem::MakeDir("textures/attack");
+	FileSystem::MakeDir("textures/bg");
+	FileSystem::MakeDir("textures/bg_deck");
+	FileSystem::MakeDir("textures/bg_menu");
+	FileSystem::MakeDir("textures/cover");
+	FileSystem::MakeDir("textures/cover2");
+	FileSystem::MakeDir("textures/pscale");
+	//sound
+#ifdef YGOPRO_USE_AUDIO
+	FileSystem::MakeDir("sound");
+	FileSystem::MakeDir("sound/BGM");
+	FileSystem::MakeDir("sound/BGM/advantage");
+	FileSystem::MakeDir("sound/BGM/deck");
+	FileSystem::MakeDir("sound/BGM/disadvantage");
+	FileSystem::MakeDir("sound/BGM/duel");
+	FileSystem::MakeDir("sound/BGM/lose");
+	FileSystem::MakeDir("sound/BGM/menu");
+	FileSystem::MakeDir("sound/BGM/win");
+	//custom sound
+	FileSystem::MakeDir("sound/custom");
+	FileSystem::MakeDir("sound/BGM/custom");
+#endif
+	//locales
+	FileSystem::MakeDir("locales");
+	//pics
+	FileSystem::MakeDir("pics");
+	FileSystem::MakeDir("pics/field");
+}
 void Game::ClearTextures() {
 	matManager.mCard.setTexture(0, 0);
 	ClearCardInfo(0);
@@ -1791,6 +1841,7 @@ void Game::CloseDuelWindow() {
 	logParam.clear();
 	lstHostList->clear();
 	DuelClient::hosts.clear();
+	DuelClient::hosts_srvpro.clear();
 	ClearTextures();
 	ResizeChatInputWindow();
 	closeDoneSignal.Set();
@@ -1992,7 +2043,6 @@ void Game::OnResize() {
 
 	wCardImg->setRelativePosition(ResizeCardImgWin(1, 1, 20, 18));
 	imgCard->setRelativePosition(ResizeCardImgWin(10, 9, 0, 0));
-	imgCard->setScaleImage(true);
 	wInfos->setRelativePosition(Resize(1, 275, 301, 639));
 	stName->setRelativePosition(irr::core::recti(10, 10, 300 * xScale - 13, 10 + 22));
 	lstLog->setRelativePosition(Resize(10, 10, 290, 290));
@@ -2156,6 +2206,33 @@ void Game::FlashWindow() {
 	fi.dwTimeout = 0;
 	FlashWindowEx(&fi);
 #endif
+}
+void Game::takeScreenshot() {
+	if(!FileSystem::IsDirExists(L"./screenshots") && !FileSystem::MakeDir(L"./screenshots"))
+		return;
+	irr::video::IImage* const image = driver->createScreenShot();
+	if(image) {
+		irr::c8 filename[64];
+		std::snprintf(filename, 64, "screenshots/ygopro_%u.png", device->getTimer()->getRealTime());
+		if (!driver->writeImageToFile(image, filename))
+			device->getLogger()->log(L"Failed to take screenshot.", irr::ELL_WARNING);
+		image->drop();
+	} else
+		device->getLogger()->log(L"Failed to take screenshot.", irr::ELL_WARNING);
+}
+bool Game::CheckRegEx(const std::wstring& text, const std::wstring& exp, bool exact) {
+	if(!gameConf.search_regex)
+		return false;
+	bool result;
+	try {
+		if(exact)
+			result = std::regex_match(text, std::wregex(exp));
+		else
+			result = std::regex_search(text, std::wregex(exp));
+	} catch(...) {
+		result = false;
+	}
+	return result;
 }
 void Game::SetCursor(irr::gui::ECURSOR_ICON icon) {
 	irr::gui::ICursorControl* cursor = device->getCursorControl();
