@@ -25,7 +25,6 @@ public:
 	void ResizeTexture();
 	irr::video::ITexture* GetTextureFromFile(const char* file, irr::s32 width, irr::s32 height);
 	irr::video::ITexture* GetTexture(int code, bool fit = false);
-	irr::video::ITexture* GetBigPicture(int code, float zoom);
 	irr::video::ITexture* GetTextureThumb(int code);
 	irr::video::ITexture* GetTextureField(int code);
 	static int LoadThumbThread();
@@ -43,7 +42,6 @@ public:
 	irr::video::ITexture* tUnknown;
 	irr::video::ITexture* tUnknownFit;
 	irr::video::ITexture* tUnknownThumb;
-	irr::video::ITexture* tBigPicture;
 	irr::video::ITexture* tLoading;
 	irr::video::ITexture* tAct;
 	irr::video::ITexture* tAttack;
