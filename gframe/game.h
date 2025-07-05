@@ -145,11 +145,11 @@ struct DuelInfo {
 	unsigned short time_limit{ 0 };
 	unsigned short time_left[2]{};
 	wchar_t str_time_left[2][16]{};
-	video::SColor time_color[2]{};
+	irr::video::SColor time_color[2]{};
 	wchar_t str_card_count[2][16]{};
 	wchar_t str_total_attack[2][16]{};
-	video::SColor card_count_color[2]{};
-	video::SColor total_attack_color[2]{};
+	irr::video::SColor card_count_color[2]{};
+	irr::video::SColor total_attack_color[2]{};
 	std::vector<unsigned int> announce_cache;
 	void Clear();
 };
@@ -196,8 +196,8 @@ public:
 	void RefreshSingleplay();
 	void RefreshBot();
 	void RefreshLocales();
-	void DrawSelectionLine(irr::video::S3DVertex* vec, bool strip, int width, float* cv);
-	void DrawSelectionLine(irr::gui::IGUIElement* element, int width, irr::video::SColor color);
+	void DrawSelectionLine(irr::irr::video::S3DVertex* vec, bool strip, int width, float* cv);
+	void DrawSelectionLine(irr::gui::IGUIElement* element, int width, irr::irr::video::SColor color);
 	void DrawBackGround();
 	void DrawLinkedZones(ClientCard* pcard);
 	void DrawSpellLinkedZones(ClientCard* pcard);
@@ -208,7 +208,7 @@ public:
 	void DrawStatus(ClientCard* pcard, int x1, int y1, int x2, int y2);
 	void DrawGUI();
 	void DrawSpec();
-	void DrawBackImage(irr::video::ITexture* texture);
+	void DrawBackImage(irr::irr::video::ITexture* texture);
 	void ShowElement(irr::gui::IGUIElement* element, int autoframe = 0);
 	void HideElement(irr::gui::IGUIElement* element, bool set_action = false);
 	void PopupElement(irr::gui::IGUIElement* element, int hideframe = 0);
@@ -272,7 +272,7 @@ public:
 	void SetCursor(irr::gui::ECURSOR_ICON icon);
 	template<typename T>
 	static void DrawShadowText(irr::gui::CGUITTFont* font, const T& text, const irr::core::rect<irr::s32>& position, const irr::core::rect<irr::s32>& padding,
-		irr::video::SColor color = 0xffffffff, irr::video::SColor shadowcolor = 0xff000000, bool hcenter = false, bool vcenter = false, const irr::core::rect<irr::s32>* clip = nullptr);
+		irr::irr::video::SColor color = 0xffffffff, irr::irr::video::SColor shadowcolor = 0xff000000, bool hcenter = false, bool vcenter = false, const irr::core::rect<irr::s32>* clip = nullptr);
 
 	std::mutex gMutex;
 	Signal frameSignal;
@@ -329,7 +329,7 @@ public:
 	DeckBuilder deckBuilder;
 	MenuHandler menuHandler;
 	irr::IrrlichtDevice* device;
-	irr::video::IVideoDriver* driver;
+	irr::irr::video::IVideoDriver* driver;
 	irr::scene::ISceneManager* smgr;
 	irr::scene::ICameraSceneNode* camera;
 
