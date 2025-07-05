@@ -1,6 +1,9 @@
 #ifndef BUFFERIO_H
 #define BUFFERIO_H
 
+#ifdef _MSC_VER
+#pragma warning(disable: 4244)
+#endif
 #include <cstdint>
 #include <cwchar>
 #include "../ocgcore/buffer.h"

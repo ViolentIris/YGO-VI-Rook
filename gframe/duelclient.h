@@ -1,10 +1,19 @@
 #ifndef DUELCLIENT_H
 #define DUELCLIENT_H
 
+#include "config.h"
 #include <vector>
 #include <set>
-#include <random>
+#include <utility>
+#include <event2/event.h>
+#include <event2/listener.h>
+#include <event2/bufferevent.h>
+#include <event2/buffer.h>
+#include <event2/thread.h>
 #include "network.h"
+#include "data_manager.h"
+#include "deck_manager.h"
+#include "../ocgcore/mtrandom.h"
 
 namespace ygo {
 
@@ -34,6 +43,10 @@ private:
 	static std::set<std::pair<unsigned int, unsigned short>> remotes;
 
 public:
+	static unsigned int temp_ip;
+	static unsigned short temp_port;
+	static unsigned short temp_ver;
+	static bool try_needed;
 	static unsigned char selftype;
 	static bool StartClient(unsigned int ip, unsigned short port, bool create_game = true);
 	static void ConnectTimeout(evutil_socket_t fd, short events, void* arg);
@@ -73,6 +86,8 @@ public:
 	}
 
 	static std::vector<HostPacket> hosts;
+	static std::vector<std::wstring> hosts_srvpro;
+	static bool is_srvpro;
 	static void BeginRefreshHost();
 	static int RefreshThread(event_base* broadev);
 	static void BroadcastReply(evutil_socket_t fd, short events, void* arg);

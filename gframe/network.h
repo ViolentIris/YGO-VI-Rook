@@ -298,6 +298,7 @@ public:
 #define STOC_HS_WATCH_CHANGE	0x22	// STOC_HS_WatchChange
 #define STOC_TEAMMATE_SURRENDER	0x23	// no data
 #define STOC_FIELD_FINISH		0x30
+#define STOC_SRVPRO_ROOMLIST	0x31
 
 // STOC_GAME_MSG header
 #define MSG_WAITING				3

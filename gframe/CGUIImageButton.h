@@ -5,6 +5,8 @@
 #ifndef _C_GUI_IMAGE_BUTTON_H_
 #define _C_GUI_IMAGE_BUTTON_H_
 
+#include <irrlicht.h>
+#include "CGUIButton.h"
 #include <IrrCompileConfig.h>
 #ifdef _IRR_COMPILE_WITH_GUI_
 

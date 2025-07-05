@@ -265,7 +265,10 @@ std::vector<unsigned int> DataManager::GetSetCodes(std::wstring setname) const {
 	std::vector<unsigned int> matchingCodes;
 	for(auto csit = _setnameStrings.begin(); csit != _setnameStrings.end(); ++csit) {
 		auto xpos = csit->second.find_first_of(L'|');//setname|another setname or extra info
-		if(setname.size() < 2) {
+		if (mainGame->CheckRegEx(csit->second, setname, true)) {
+			matchingCodes.push_back(csit->first);
+		}
+		else if(setname.size() < 2) {
 			if(csit->second.compare(0, xpos, setname) == 0
 				|| csit->second.compare(xpos + 1, csit->second.length(), setname) == 0)
 				matchingCodes.push_back(csit->first);

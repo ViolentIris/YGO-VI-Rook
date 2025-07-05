@@ -229,7 +229,13 @@ void ReplayMode::EndDuel() {
 		mainGame->HideElement(mainGame->wCardSelect);
 		mainGame->PopupElement(mainGame->wMessage);
 		mainGame->gMutex.unlock();
-		mainGame->actionSignal.Wait();
+		if(auto_watch_mode) {
+			mainGame->actionSignal.Wait(2000);
+			mainGame->device->closeDevice();
+		}
+		else {
+			mainGame->actionSignal.Wait();
+		}
 		mainGame->gMutex.lock();
 		mainGame->dInfo.isStarted = false;
 		mainGame->dInfo.isInDuel = false;
@@ -251,6 +257,7 @@ void ReplayMode::EndDuel() {
 }
 void ReplayMode::Restart(bool refresh) {
 	end_duel(pduel);
+	mainGame->dInfo.isInDuel = false;
 	mainGame->dInfo.isStarted = false;
 	mainGame->dInfo.isInDuel = false;
 	mainGame->dInfo.isFinished = true;
@@ -302,6 +309,17 @@ bool ReplayMode::ReplayAnalyze(unsigned char* msg, unsigned int len) {
 		bool pauseable = true;
 		mainGame->dInfo.curMsg = BufferIO::ReadUInt8(pbuf);
 		switch (mainGame->dInfo.curMsg) {
+		case MSG_RESET_TIME: {
+			pbuf += 3;
+			break;
+		}
+		case MSG_UPDATE_CARD: {
+			pbuf += 3;
+			const int clen = BufferIO::ReadInt32(pbuf);
+			pbuf += (clen - 4);
+			DuelClient::ClientAnalyze(offset, pbuf - offset);
+			break;
+		}
 		case MSG_RETRY: {
 			if(mainGame->dInfo.isReplaySkiping) {
 				mainGame->dInfo.isReplaySkiping = false;
@@ -313,7 +331,13 @@ bool ReplayMode::ReplayAnalyze(unsigned char* msg, unsigned int len) {
 			mainGame->PopupElement(mainGame->wMessage);
 			mainGame->gMutex.unlock();
 			mainGame->actionSignal.Reset();
-			mainGame->actionSignal.Wait();
+			if (auto_watch_mode){
+				mainGame->actionSignal.Wait(2000);
+				mainGame->device->closeDevice();
+			}
+			else{
+				mainGame->actionSignal.Wait();
+			}
 			return false;
 		}
 		case MSG_HINT: {

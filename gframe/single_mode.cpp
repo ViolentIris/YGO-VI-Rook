@@ -63,6 +63,7 @@ int SingleMode::SinglePlayThread() {
 	mainGame->dInfo.clientname[0] = 0;
 	mainGame->dInfo.player_type = 0;
 	mainGame->dInfo.turn = 0;
+	mainGame->dInfo.announce_cache.clear();
 	if(mainGame->chkSinglePlayReturnDeckTop->isChecked())
 		opt |= DUEL_RETURN_DECK_TOP;
 	char filename[256]{};
@@ -190,6 +191,17 @@ bool SingleMode::SinglePlayAnalyze(unsigned char* msg, unsigned int len) {
 		offset = pbuf;
 		mainGame->dInfo.curMsg = BufferIO::ReadUInt8(pbuf);
 		switch (mainGame->dInfo.curMsg) {
+		case MSG_RESET_TIME: {
+			pbuf += 3;
+			break;
+		}
+		case MSG_UPDATE_CARD: {
+			pbuf += 3;
+			const int clen = BufferIO::ReadInt32(pbuf);
+			pbuf += (clen - 4);
+			DuelClient::ClientAnalyze(offset, pbuf - offset);
+			break;
+		}
 		case MSG_RETRY: {
 			if(!DuelClient::ClientAnalyze(offset, pbuf - offset)) {
 				mainGame->singleSignal.Reset();
