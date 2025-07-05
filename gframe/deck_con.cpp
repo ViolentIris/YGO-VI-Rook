@@ -115,6 +115,11 @@ void DeckBuilder::Terminate() {
 	mainGame->wCardImg->setVisible(false);
 	mainGame->wInfos->setVisible(false);
 	mainGame->btnLeaveGame->setVisible(false);
+	mainGame->wBigCard->setVisible(false);
+	mainGame->btnBigCardOriginalSize->setVisible(false);
+	mainGame->btnBigCardZoomIn->setVisible(false);
+	mainGame->btnBigCardZoomOut->setVisible(false);
+	mainGame->btnBigCardClose->setVisible(false);
 	mainGame->ResizeChatInputWindow();
 	mainGame->PopupElement(mainGame->wMainMenu);
 	mainGame->device->setEventReceiver(&mainGame->menuHandler);
@@ -708,6 +713,24 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				load_current_deck(mainGame->cbCategorySelect, mainGame->cbDeckSelect);
 				break;
 			}
+			case BUTTON_BIG_CARD_ORIG_SIZE: {
+				ShowBigCard(bigcard_code, 1);
+				break;
+			}
+			case BUTTON_BIG_CARD_ZOOM_IN: {
+				bigcard_zoom += 0.2f;
+				ZoomBigCard();
+				break;
+			}
+			case BUTTON_BIG_CARD_ZOOM_OUT: {
+				bigcard_zoom -= 0.2f;
+				ZoomBigCard();
+				break;
+			}
+			case BUTTON_BIG_CARD_CLOSE: {
+				CloseBigCard();
+				break;
+			}
 			case BUTTON_MSG_OK: {
 				mainGame->HideElement(mainGame->wMessage);
 				mainGame->actionSignal.Set();
@@ -1062,6 +1085,11 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 		}
 		case irr::EMIE_LMOUSE_LEFT_UP: {
 			is_starting_dragging = false;
+			irr::gui::IGUIElement* root = mainGame->env->getRootGUIElement();
+			if(!is_draging && !mainGame->is_siding && root->getElementFromPoint(mouse_pos) == mainGame->imgCard) {
+				ShowBigCard(mainGame->showingcode, 1);
+				break;
+			}
 			if(!is_draging)
 				break;
 			soundManager.PlaySoundEffect(SOUND_CARD_DROP);
@@ -1085,6 +1113,14 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			is_draging = false;
 			break;
 		}
+		case irr::EMIE_LMOUSE_DOUBLE_CLICK: {
+			irr::gui::IGUIElement* root = mainGame->env->getRootGUIElement();
+			if(!is_draging && !mainGame->is_siding && root->getElementFromPoint(mouse_pos) == root && hovered_code) {
+				ShowBigCard(hovered_code, 1);
+				break;
+			}
+			break;
+		}
 		case irr::EMIE_RMOUSE_LEFT_UP: {
 			if(mainGame->is_siding) {
 				if(is_draging)
@@ -1105,6 +1141,10 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					if(push_extra(pointer) || push_main(pointer))
 						pop_side(hovered_seq);
 				}
+				break;
+			}
+			if(mainGame->wBigCard->isVisible()) {
+				CloseBigCard();
 				break;
 			}
 			if(havePopupWindow())
@@ -1195,6 +1235,12 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			break;
 		}
 		case irr::EMIE_MOUSE_WHEEL: {
+			irr::gui::IGUIElement* root = mainGame->env->getRootGUIElement();
+			if(root->getElementFromPoint(mouse_pos) == mainGame->imgBigCard) {
+				bigcard_zoom += 0.1f * event.MouseInput.Wheel;
+				ZoomBigCard(mouse_pos.X, mouse_pos.Y);
+				break;
+			}
 			if(!mainGame->scrFilter->isVisible())
 				break;
 			if(mainGame->env->hasFocus(mainGame->scrFilter))
@@ -1510,7 +1556,6 @@ void DeckBuilder::FilterCards() {
 			} else {
 				match = CardNameContains(text.name.c_str(), elements_iterator->keyword.c_str())
 					|| text.text.find(elements_iterator->keyword) != std::wstring::npos
-					|| mainGame->CheckRegEx(text.text, elements_iterator->keyword)
 					|| data.is_setcodes(elements_iterator->setcodes);
 			}
 			if(elements_iterator->exclude)
@@ -1578,7 +1623,7 @@ void DeckBuilder::SortList() {
 	auto left = results.begin();
 	const wchar_t* pstr = mainGame->ebCardName->getText();
 	for(auto it = results.begin(); it != results.end(); ++it) {
-		if(std::wcscmp(pstr, dataManager.GetName((*it)->first)) == 0 || mainGame->CheckRegEx(dataManager.GetName((*it)->first), pstr, true)) {
+		if(std::wcscmp(pstr, dataManager.GetName((*it)->first)) == 0) {
 			std::iter_swap(left, it);
 			++left;
 		}
@@ -1672,6 +1717,53 @@ void DeckBuilder::ShowDeckManage() {
 	mainGame->PopupElement(mainGame->wDeckManage);
 }
 
+void DeckBuilder::ShowBigCard(int code, float zoom) {
+	bigcard_code = code;
+	bigcard_zoom = zoom;
+	auto img = imageManager.GetBigPicture(code, zoom);
+	mainGame->imgBigCard->setImage(img);
+	auto size = img->getSize();
+	irr::s32 left = mainGame->window_size.Width / 2 - size.Width / 2;
+	irr::s32 top = mainGame->window_size.Height / 2 - size.Height / 2;
+	mainGame->imgBigCard->setRelativePosition(irr::core::recti(0, 0, size.Width, size.Height));
+	mainGame->wBigCard->setRelativePosition(irr::core::recti(left, top, left + size.Width, top + size.Height));
+	mainGame->gMutex.lock();
+	mainGame->btnBigCardOriginalSize->setVisible(true);
+	mainGame->btnBigCardZoomIn->setVisible(true);
+	mainGame->btnBigCardZoomOut->setVisible(true);
+	mainGame->btnBigCardClose->setVisible(true);
+	mainGame->ShowElement(mainGame->wBigCard);
+	mainGame->env->getRootGUIElement()->bringToFront(mainGame->wBigCard);
+	mainGame->gMutex.unlock();
+}
+void DeckBuilder::ZoomBigCard(irr::s32 centerx, irr::s32 centery) {
+	if(bigcard_zoom >= 4)
+		bigcard_zoom = 4;
+	if(bigcard_zoom <= 0.2f)
+		bigcard_zoom = 0.2f;
+	auto img = imageManager.GetBigPicture(bigcard_code, bigcard_zoom);
+	mainGame->imgBigCard->setImage(img);
+	auto size = img->getSize();
+	auto pos = mainGame->wBigCard->getRelativePosition();
+	if(centerx == -1) {
+		centerx = pos.UpperLeftCorner.X + pos.getWidth() / 2;
+		centery = pos.UpperLeftCorner.Y + pos.getHeight() * 0.444f;
+	}
+	float posx = (float)(centerx - pos.UpperLeftCorner.X) / pos.getWidth();
+	float posy = (float)(centery - pos.UpperLeftCorner.Y) / pos.getHeight();
+	irr::s32 left = centerx - size.Width * posx;
+	irr::s32 top = centery - size.Height * posy;
+	mainGame->imgBigCard->setRelativePosition(irr::core::recti(0, 0, size.Width, size.Height));
+	mainGame->wBigCard->setRelativePosition(irr::core::recti(left, top, left + size.Width, top + size.Height));
+}
+void DeckBuilder::CloseBigCard() {
+	mainGame->HideElement(mainGame->wBigCard);
+	mainGame->btnBigCardOriginalSize->setVisible(false);
+	mainGame->btnBigCardZoomIn->setVisible(false);
+	mainGame->btnBigCardZoomOut->setVisible(false);
+	mainGame->btnBigCardClose->setVisible(false);
+}
+
 static inline wchar_t NormalizeChar(wchar_t c) {
 	/*
 	// Convert all symbols and punctuations to space.
@@ -1699,8 +1791,6 @@ bool DeckBuilder::CardNameContains(const wchar_t* haystack, const wchar_t* needl
 	if(!haystack) {
 		return false;
 	}
-	if(mainGame->CheckRegEx(haystack, needle))
-		return true;
 	int i = 0;
 	int j = 0;
 	while(haystack[i]) {

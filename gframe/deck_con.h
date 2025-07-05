@@ -29,6 +29,9 @@ public:
 	void RefreshPackListScroll();
 	void ChangeCategory(int catesel);
 	void ShowDeckManage();
+	void ShowBigCard(int code, float zoom);
+	void ZoomBigCard(irr::s32 centerx = -1, irr::s32 centery = -1);
+	void CloseBigCard();
 
 	bool CardNameContains(const wchar_t *haystack, const wchar_t *needle);
 
@@ -65,6 +68,8 @@ public:
 	bool is_starting_dragging{};
 	int dragx{};
 	int dragy{};
+	int bigcard_code{};
+	float bigcard_zoom{};
 	size_t pre_mainc{};
 	size_t pre_extrac{};
 	size_t pre_sidec{};

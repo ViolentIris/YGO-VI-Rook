@@ -88,9 +88,6 @@ bool DataManager::LoadDB(const wchar_t* wfile) {
 #else
 	auto reader = FileSystem->createAndOpenFile(file);
 #endif
-	return LoadDB(reader);
-}
-bool DataManager::LoadDB(irr::io::IReadFile* reader) {
 	if(reader == nullptr)
 		return false;
 	spmemvfs_db_t db;
@@ -102,7 +99,7 @@ bool DataManager::LoadDB(irr::io::IReadFile* reader) {
 	reader->drop();
 	(mem->data)[mem->total] = '\0';
 	bool ret{};
-	if (spmemvfs_open_db(&db, "temp.db", mem) != SQLITE_OK)
+	if (spmemvfs_open_db(&db, file, mem) != SQLITE_OK)
 		ret = Error(db.handle);
 	else
 		ret = ReadDB(db.handle);
@@ -112,17 +109,6 @@ bool DataManager::LoadDB(irr::io::IReadFile* reader) {
 }
 bool DataManager::LoadStrings(const char* file) {
 	FILE* fp = myfopen(file, "r");
-	if(!fp)
-		return false;
-	char linebuf[TEXT_LINE_SIZE]{};
-	while(std::fgets(linebuf, sizeof linebuf, fp)) {
-		ReadStringConfLine(linebuf);
-	}
-	std::fclose(fp);
-	return true;
-}
-bool DataManager::LoadStrings(const wchar_t* file) {
-	FILE* fp = mywfopen(file, "r");
 	if(!fp)
 		return false;
 	char linebuf[TEXT_LINE_SIZE]{};
@@ -279,10 +265,7 @@ std::vector<unsigned int> DataManager::GetSetCodes(std::wstring setname) const {
 	std::vector<unsigned int> matchingCodes;
 	for(auto csit = _setnameStrings.begin(); csit != _setnameStrings.end(); ++csit) {
 		auto xpos = csit->second.find_first_of(L'|');//setname|another setname or extra info
-		if (mainGame->CheckRegEx(csit->second, setname, true)) {
-			matchingCodes.push_back(csit->first);
-		}
-		else if(setname.size() < 2) {
+		if(setname.size() < 2) {
 			if(csit->second.compare(0, xpos, setname) == 0
 				|| csit->second.compare(xpos + 1, csit->second.length(), setname) == 0)
 				matchingCodes.push_back(csit->first);
@@ -404,35 +387,30 @@ uint32_t DataManager::CardReader(uint32_t code, card_data* pData) {
 		pData->clear();
 	return 0;
 }
-unsigned char* DataManager::ScriptReaderEx(const char* script_name, int* slen) {
-	if (std::strncmp(script_name, "./script", 8) != 0)
-		return ReadScriptFromFile(script_name, slen);
-	unsigned char* buffer;
-	if(!mainGame->gameConf.prefer_expansion_script) {
-		buffer = ScriptReaderExSingle("", script_name, slen);
-		if(buffer)
-			return buffer;
+unsigned char* DataManager::ScriptReaderEx(const char* script_path, int* slen) {
+	// default script name: ./script/c%d.lua
+	if (std::strncmp(script_path, "./script", 8) != 0) // not a card script file
+		return ReadScriptFromFile(script_path, slen);
+	const char* script_name = script_path + 2;
+	char expansions_path[1024]{};
+	std::snprintf(expansions_path, sizeof expansions_path, "./expansions/%s", script_name);
+	if (mainGame->gameConf.prefer_expansion_script) { // debug script with raw file in expansions
+		if (ReadScriptFromFile(expansions_path, slen))
+			return scriptBuffer;
+		if (ReadScriptFromIrrFS(script_name, slen))
+			return scriptBuffer;
+		if (ReadScriptFromFile(script_path, slen))
+			return scriptBuffer;
+	} else {
+		if (ReadScriptFromIrrFS(script_name, slen))
+			return scriptBuffer;
+		if (ReadScriptFromFile(script_path, slen))
+			return scriptBuffer;
+		if (ReadScriptFromFile(expansions_path, slen))
+			return scriptBuffer;
 	}
-	buffer = ScriptReaderExSingle("specials/", script_name, slen, 9);
-	if(buffer)
-		return buffer;
-	for(auto ex : mainGame->GetExpansionsListU("/")) {
-		buffer = ScriptReaderExSingle(ex.c_str(), script_name, slen);
-		if(buffer)
-			return buffer;
-	}
-	buffer = ScriptReaderExSingle("", script_name, slen, 2, TRUE);
-	if(buffer)
-		return buffer;
-	return ScriptReaderExSingle("", script_name, slen);
-}
-unsigned char* DataManager::ScriptReaderExSingle(const char* path, const char* script_name, int* slen, int pre_len, unsigned int use_irr) {
-	char sname[256];
-	std::snprintf(sname, sizeof sname, "%s%s", path, script_name + pre_len); //default script name: ./script/c%d.lua
-	if (use_irr) {
-		return ReadScriptFromIrrFS(sname, slen);
-	}
-	return ReadScriptFromFile(sname, slen);
+
+	return nullptr;
 }
 unsigned char* DataManager::ReadScriptFromIrrFS(const char* script_name, int* slen) {
 #ifdef _WIN32
@@ -530,4 +508,5 @@ bool DataManager::deck_sort_name(code_pointer p1, code_pointer p2) {
 		return res < 0;
 	return p1->first < p2->first;
 }
+
 }

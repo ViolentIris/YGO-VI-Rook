@@ -88,9 +88,6 @@ void ClientField::Clear() {
 		extra_act[i] = false;
 		pzone_act[i] = false;
 	}
-	for(auto cit = limbo_temp.begin(); cit != limbo_temp.end(); ++cit)
-			delete *cit;
-	limbo_temp.clear();
 	for(auto sit = overlay_cards.begin(); sit != overlay_cards.end(); ++sit)
 		delete *sit;
 	overlay_cards.clear();
@@ -120,7 +117,6 @@ void ClientField::Clear() {
 	cant_check_grave = false;
 	tag_surrender = false;
 	tag_teammate_surrender = false;
-	RefreshCardCountDisplay();
 }
 void ClientField::Initial(int player, int deckc, int extrac, int sidec) {
 	auto load_location = [&](std::vector<ClientCard*>& container, int count, uint8_t location) {
@@ -139,8 +135,6 @@ void ClientField::Initial(int player, int deckc, int extrac, int sidec) {
 	load_location(deck[player], deckc, LOCATION_DECK);
 	load_location(extra[player], extrac, LOCATION_EXTRA);
 	load_location(remove[player], sidec, LOCATION_REMOVED);
-
-	RefreshCardCountDisplay();
 }
 void ClientField::ResetSequence(std::vector<ClientCard*>& list, bool reset_height) {
 	unsigned char seq = 0;
@@ -249,7 +243,6 @@ void ClientField::AddCard(ClientCard* pcard, int controler, int location, int se
 		break;
 	}
 	}
-	RefreshCardCountDisplay();
 }
 ClientCard* ClientField::RemoveCard(int controler, int location, int sequence) {
 	ClientCard* pcard = nullptr;
@@ -320,7 +313,6 @@ ClientCard* ClientField::RemoveCard(int controler, int location, int sequence) {
 		return nullptr;
 	}
 	pcard->location = 0;
-	RefreshCardCountDisplay();
 	return pcard;
 }
 void ClientField::UpdateCard(int controler, int location, int sequence, unsigned char* data) {
@@ -328,7 +320,6 @@ void ClientField::UpdateCard(int controler, int location, int sequence, unsigned
 	int len = BufferIO::ReadInt32(data);
 	if (pcard && len > LEN_HEADER)
 		pcard->UpdateInfo(data);
-	RefreshCardCountDisplay();
 }
 void ClientField::UpdateFieldCard(int controler, int location, unsigned char* data) {
 	std::vector<ClientCard*>* lst = 0;
@@ -364,7 +355,6 @@ void ClientField::UpdateFieldCard(int controler, int location, unsigned char* da
 			(*cit)->UpdateInfo(data);
 		data += len - 4;
 	}
-	RefreshCardCountDisplay();
 }
 void ClientField::ClearCommandFlag() {
 	for(auto cit = activatable_cards.begin(); cit != activatable_cards.end(); ++cit)
@@ -472,8 +462,6 @@ void ClientField::ShowSelectCard(bool buttonok, bool chain) {
 				myswprintf(formatBuffer, L"%ls[%d](%d)", 
 					dataManager.FormatLocation(selectable_cards[i]->overlayTarget->location, selectable_cards[i]->overlayTarget->sequence),
 					selectable_cards[i]->overlayTarget->sequence + 1, selectable_cards[i]->sequence + 1);
-			else if (selectable_cards[i]->location == 0)
-				myswprintf(formatBuffer, L"");
 			else
 				myswprintf(formatBuffer, L"%ls[%d]", dataManager.FormatLocation(selectable_cards[i]->location, selectable_cards[i]->sequence),
 					selectable_cards[i]->sequence + 1);
@@ -769,7 +757,6 @@ void ClientField::ReplaySwap() {
 	std::swap(mainGame->dInfo.strLP[0], mainGame->dInfo.strLP[1]);
 	std::swap(mainGame->dInfo.hostname, mainGame->dInfo.clientname);
 	std::swap(mainGame->dInfo.hostname_tag, mainGame->dInfo.clientname_tag);
-	RefreshCardCountDisplay();
 	for(auto chit = chains.begin(); chit != chains.end(); ++chit) {
 		chit->controler = 1 - chit->controler;
 		GetChainLocation(chit->controler, chit->location, chit->sequence, &chit->chain_pos);
@@ -1072,22 +1059,21 @@ void ClientField::GetCardLocation(ClientCard* pcard, irr::core::vector3df* t, ir
 		break;
 	}
 	case LOCATION_OVERLAY: {
-		if (!(pcard->overlayTarget->location & LOCATION_ONFIELD)) {
+		if (pcard->overlayTarget->location != LOCATION_MZONE) {
 			return;
 		}
 		int oseq = pcard->overlayTarget->sequence;
 		int mseq = (sequence < MAX_LAYER_COUNT) ? sequence : (MAX_LAYER_COUNT - 1);
-		auto vFieldZone = (pcard->overlayTarget->location == LOCATION_MZONE) ? matManager.vFieldMzone[pcard->overlayTarget->controler][oseq] : matManager.vFieldSzone[pcard->overlayTarget->controler][oseq][rule];
 		if (pcard->overlayTarget->controler == 0) {
-			t->X = (vFieldZone[0].Pos.X + vFieldZone[1].Pos.X) / 2 - 0.12f + 0.06f * mseq;
-			t->Y = (vFieldZone[0].Pos.Y + vFieldZone[2].Pos.Y) / 2 + 0.05f;
+			t->X = (matManager.vFieldMzone[0][oseq][0].Pos.X + matManager.vFieldMzone[0][oseq][1].Pos.X) / 2 - 0.12f + 0.06f * mseq;
+			t->Y = (matManager.vFieldMzone[0][oseq][0].Pos.Y + matManager.vFieldMzone[0][oseq][2].Pos.Y) / 2 + 0.05f;
 			t->Z = overlay_buttom + mseq * material_height;
 			r->X = 0.0f;
 			r->Y = 0.0f;
 			r->Z = 0.0f;
 		} else {
-			t->X = (vFieldZone[0].Pos.X + vFieldZone[1].Pos.X) / 2 + 0.12f - 0.06f * mseq;
-			t->Y = (vFieldZone[0].Pos.Y + vFieldZone[2].Pos.Y) / 2 - 0.05f;
+			t->X = (matManager.vFieldMzone[1][oseq][0].Pos.X + matManager.vFieldMzone[1][oseq][1].Pos.X) / 2 + 0.12f - 0.06f * mseq;
+			t->Y = (matManager.vFieldMzone[1][oseq][0].Pos.Y + matManager.vFieldMzone[1][oseq][2].Pos.Y) / 2 - 0.05f;
 			t->Z = overlay_buttom + mseq * material_height;
 			r->X = 0.0f;
 			r->Y = 0.0f;
@@ -1181,14 +1167,6 @@ bool ClientField::ShowSelectSum(bool panelmode) {
 		ShowCancelOrFinishButton(0);
 	}
 	return false;
-}
-static void get_sum_params(irr::u32 opParam, int& op1, int& op2) {
-	op1 = opParam & 0xffff;
-	op2 = (opParam >> 16) & 0xffff;
-	if(op2 & 0x8000) {
-		op1 = opParam & 0x7fffffff;
-		op2 = 0;
-	}
 }
 bool ClientField::CheckSelectSum() {
 	std::set<ClientCard*> selable;
@@ -1569,27 +1547,20 @@ void ClientField::UpdateDeclarableList() {
 		ancard.push_back(trycode);
 		return;
 	}
+	if(pname[0] == 0) {
+		int sel = mainGame->lstANCard->getSelected();
+		trycode = (sel == -1) ? 0 : ancard[sel];
+	}
 	mainGame->lstANCard->clear();
 	ancard.clear();
-	if(pname[0] == 0 && mainGame->dInfo.announce_cache.size()) {
-		for(int i = 0; i < mainGame->dInfo.announce_cache.size(); ++i) {
-			unsigned int cache_code = mainGame->dInfo.announce_cache[i];
-			if(dataManager.GetString(cache_code, &cstr) && dataManager.GetData(cache_code, &cd) && is_declarable(cd, declare_opcodes)) {
-				mainGame->lstANCard->addItem(cstr.name.c_str());
-				ancard.push_back(cache_code);
-			}
-		}
-		// if(ancard.size())
-		// return;
-	}
 	for(auto cit = dataManager.strings_begin(); cit != dataManager.strings_end(); ++cit) {
-		if(cit->second.name.find(pname) != std::wstring::npos || mainGame->CheckRegEx(cit->second.name, pname)) {
+		if(cit->second.name.find(pname) != std::wstring::npos) {
 			auto cp = dataManager.GetCodePointer(cit->first);
 			if (cp == dataManager.datas_end())
 				continue;
 			//datas.alias can be double card names or alias
 			if(is_declarable(cp->second, declare_opcodes)) {
-				if(pname == cit->second.name) { //exact match
+				if(pname == cit->second.name || trycode == cit->first) { //exact match or last used
 					mainGame->lstANCard->insertItem(0, cit->second.name.c_str(), -1);
 					ancard.insert(ancard.begin(), cit->first);
 				} else {
@@ -1598,51 +1569,6 @@ void ClientField::UpdateDeclarableList() {
 				}
 			}
 		}
-	}
-}
-void ClientField::RefreshCardCountDisplay() {
-	ClientCard* pcard;
-	for(int p = 0; p < 2; ++p) {
-		mainGame->dInfo.card_count[p] = hand[p].size();
-		mainGame->dInfo.total_attack[p] = 0;
-		for(auto it = mzone[p].begin(); it != mzone[p].end(); ++it) {
-			pcard = *it;
-			if(pcard) {
-				//if(pcard->type & TYPE_LINK && pcard->link)
-				//	mainGame->dInfo.card_count[p] += pcard->link;
-				//else
-				mainGame->dInfo.card_count[p]++;
-				if(pcard->position == POS_FACEUP_ATTACK && pcard->attack > 0 && (p == 1 || mainGame->dInfo.curMsg != MSG_SELECT_BATTLECMD || pcard->cmdFlag & COMMAND_ATTACK))
-					mainGame->dInfo.total_attack[p] += pcard->attack;
-			}
-		}
-		for(auto it = szone[p].begin(); it != szone[p].end(); ++it) {
-			pcard = *it;
-			if(pcard)
-				mainGame->dInfo.card_count[p]++;
-		}
-		myswprintf(mainGame->dInfo.str_card_count[p], L"%d", mainGame->dInfo.card_count[p]);
-		myswprintf(mainGame->dInfo.str_total_attack[p], L"%d", mainGame->dInfo.total_attack[p]);
-	}
-	if(mainGame->dInfo.card_count[0] > mainGame->dInfo.card_count[1]) {
-		mainGame->dInfo.card_count_color[0] = 0xffffff00;
-		mainGame->dInfo.card_count_color[1] = 0xffff0000;
-	} else if(mainGame->dInfo.card_count[1] > mainGame->dInfo.card_count[0]) {
-		mainGame->dInfo.card_count_color[1] = 0xffffff00;
-		mainGame->dInfo.card_count_color[0] = 0xffff0000;
-	} else {
-		mainGame->dInfo.card_count_color[0] = 0xffffffff;
-		mainGame->dInfo.card_count_color[1] = 0xffffffff;
-	}
-	if(mainGame->dInfo.total_attack[0] > mainGame->dInfo.total_attack[1]) {
-		mainGame->dInfo.total_attack_color[0] = 0xffffff00;
-		mainGame->dInfo.total_attack_color[1] = 0xffff0000;
-	} else if(mainGame->dInfo.total_attack[1] > mainGame->dInfo.total_attack[0]) {
-		mainGame->dInfo.total_attack_color[1] = 0xffffff00;
-		mainGame->dInfo.total_attack_color[0] = 0xffff0000;
-	} else {
-		mainGame->dInfo.total_attack_color[0] = 0xffffffff;
-		mainGame->dInfo.total_attack_color[1] = 0xffffffff;
 	}
 }
 }

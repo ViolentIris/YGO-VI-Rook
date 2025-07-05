@@ -13,7 +13,7 @@
 #include <windows.h>
 #include <ws2tcpip.h>
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) or defined(__MINGW32__)
 #define mywcsncasecmp _wcsnicmp
 #define mystrncasecmp _strnicmp
 #else
@@ -43,24 +43,6 @@
 
 #define mywcsncasecmp wcsncasecmp
 #define mystrncasecmp strncasecmp
-#endif
-
-#ifndef _WIN32
-#include <wchar.h>
-inline int _wtoi(const wchar_t * str){
-	return (int)wcstol(str, 0, 10);
-}
-#endif
-
-// load env things
-#ifdef _WIN32
-#include <windows.h>
-#include <string>
-#else
-#include <unistd.h>
-#include <stdlib.h>
-
-extern char** environ;
 #endif
 
 #include <cstdio>
@@ -107,14 +89,11 @@ inline FILE* myfopen(const char* filename, const char* mode) {
 
 #include <irrlicht.h>
 
-extern unsigned short PRO_VERSION;
+extern const unsigned short PRO_VERSION;
 extern unsigned int enable_log;
 extern bool exit_on_return;
-extern bool auto_watch_mode;
 extern bool open_file;
 extern wchar_t open_file_name[256];
 extern bool bot_mode;
-extern bool expansions_specified;
-extern std::vector<std::wstring> expansions_list;
 
 #endif

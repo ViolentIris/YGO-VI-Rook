@@ -32,7 +32,6 @@ public:
 	std::vector<ClientCard*> grave[2];
 	std::vector<ClientCard*> remove[2];
 	std::vector<ClientCard*> extra[2];
-	std::vector<ClientCard*> limbo_temp;
 	std::set<ClientCard*> overlay_cards;
 
 	std::vector<ClientCard*> summonable_cards;
@@ -69,7 +68,6 @@ public:
 	int announce_count{ 0 };
 	int select_counter_count{ 0 };
 	int select_counter_type{ 0 };
-	int current_mset_param{ 0 };
 	std::vector<ClientCard*> selectable_cards;
 	std::vector<ClientCard*> selected_cards;
 	std::set<ClientCard*> selectsum_cards;
@@ -131,7 +129,6 @@ public:
 	bool check_sum_trib(std::set<ClientCard*>::const_iterator index, std::set<ClientCard*>::const_iterator end, int acc);
 
 	void UpdateDeclarableList();
-	void RefreshCardCountDisplay();
 
 	irr::gui::IGUIElement* panel{ nullptr };
 	std::vector<int> ancard;

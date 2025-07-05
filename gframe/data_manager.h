@@ -45,9 +45,7 @@ public:
 	DataManager();
 	bool ReadDB(sqlite3* pDB);
 	bool LoadDB(const wchar_t* wfile);
-	bool LoadDB(irr::io::IReadFile* reader);
 	bool LoadStrings(const char* file);
-	bool LoadStrings(const wchar_t* file);
 	bool LoadStrings(irr::io::IReadFile* reader);
 	void ReadStringConfLine(const char* linebuf);
 	bool Error(sqlite3* pDB, sqlite3_stmt* pStmt = nullptr);
@@ -85,8 +83,7 @@ public:
 	static unsigned char scriptBuffer[0x100000];
 	static const wchar_t* unknown_string;
 	static uint32_t CardReader(uint32_t, card_data*);
-	static unsigned char* ScriptReaderEx(const char* script_name, int* slen);
-	static unsigned char* ScriptReaderExSingle(const char* path, const char* script_name, int* slen, int pre_len = 2, unsigned int use_irr = FALSE);
+	static unsigned char* ScriptReaderEx(const char* script_path, int* slen);
 	
 	//read by IFileSystem
 	static unsigned char* ReadScriptFromIrrFS(const char* script_name, int* slen);

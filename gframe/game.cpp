@@ -11,10 +11,8 @@
 #include "netserver.h"
 #include "single_mode.h"
 #include <thread>
-#include <sstream>
-#include <regex>
 
-unsigned short PRO_VERSION = 0x1362;
+const unsigned short PRO_VERSION = 0x1362;
 
 namespace ygo {
 
@@ -50,29 +48,12 @@ void DuelInfo::Clear() {
 	time_limit = 0;
 	time_left[0] = 0;
 	time_left[1] = 0;
-
-	str_time_left[0][0] = 0;
-	str_time_left[1][0] = 0;
-	time_color[0] = 0;
-	time_color[1] = 0;
-	str_card_count[0][0] = 0;
-	str_card_count[1][0] = 0;
-	str_total_attack[0][0] = 0;
-	str_total_attack[1][0] = 0;
-	card_count_color[0] = 0;
-	card_count_color[1] = 0;
-	total_attack_color[0] = 0;
-	total_attack_color[1] = 0;
-	announce_cache.clear();
 }
 
 bool Game::Initialize() {
-	initUtils();
 	LoadConfig();
 	irr::SIrrlichtCreationParameters params{};
-	params.LoggingLevel = ELL_NONE;
 	params.AntiAlias = gameConf.antialias;
-	PRO_VERSION = gameConf.game_version;
 	if(gameConf.use_d3d)
 		params.DriverType = irr::video::EDT_DIRECT3D9;
 	else
@@ -96,12 +77,10 @@ bool Game::Initialize() {
 		return false;
 	}
 	DataManager::FileSystem = device->getFileSystem();
-	if(dataManager.LoadDB(GetLocaleDirWide("cards.cdb"))) {} else
 	if(!dataManager.LoadDB(L"cards.cdb")) {
 		ErrorLog("Failed to load card database (cards.cdb)!");
 		return false;
 	}
-	if(dataManager.LoadStrings(GetLocaleDir("strings.conf"))) {} else
 	if(!dataManager.LoadStrings("strings.conf")) {
 		ErrorLog("Failed to load strings!");
 		return false;
@@ -199,12 +178,12 @@ bool Game::Initialize() {
 	//main menu
 	wchar_t strbuf[256];
 	myswprintf(strbuf, L"YGO-VI-Rook Version:%X.0%X.%X", (PRO_VERSION & 0xf000U) >> 12, (PRO_VERSION & 0x0ff0U) >> 4, PRO_VERSION & 0x000fU);
-	wMainMenu = env->addWindow(irr::core::rect<irr::s32>(370, 200, 650, 485), false, strbuf);
+	wMainMenu = env->addWindow(irr::core::rect<irr::s32>(370, 200, 650, 415), false, strbuf);
 	wMainMenu->getCloseButton()->setVisible(false);
-	wMainMenu->setDraggable(false);
 	btnLanMode = env->addButton(irr::core::rect<irr::s32>(10, 30, 270, 60), wMainMenu, BUTTON_LAN_MODE, dataManager.GetSysString(1200));
 	btnSingleMode = env->addButton(irr::core::rect<irr::s32>(10, 65, 270, 95), wMainMenu, BUTTON_SINGLE_MODE, dataManager.GetSysString(1201));
 	btnReplayMode = env->addButton(irr::core::rect<irr::s32>(10, 100, 270, 130), wMainMenu, BUTTON_REPLAY_MODE, dataManager.GetSysString(1202));
+//	btnTestMode = env->addButton(irr::core::rect<irr::s32>(10, 135, 270, 165), wMainMenu, BUTTON_TEST_MODE, dataManager.GetSysString(1203));
 	btnDeckEdit = env->addButton(irr::core::rect<irr::s32>(10, 135, 270, 165), wMainMenu, BUTTON_DECK_EDIT, dataManager.GetSysString(1204));
 	btnModeExit = env->addButton(irr::core::rect<irr::s32>(10, 170, 270, 200), wMainMenu, BUTTON_MODE_EXIT, dataManager.GetSysString(1210));
 	//lan mode
@@ -418,9 +397,6 @@ bool Game::Initialize() {
 	chkDrawSingleChain = env->addCheckBox(false, irr::core::rect<irr::s32>(posX, posY, posX + 260, posY + 25), tabHelper, CHECKBOX_DRAW_SINGLE_CHAIN, dataManager.GetSysString(1287));
 	chkDrawSingleChain->setChecked(gameConf.draw_single_chain != 0);
 	posY += 30;
-	chkAskMSet = env->addCheckBox(false, irr::core::rect<irr::s32>(posX, posY, posX + 260, posY + 25), tabHelper, CHECKBOX_ASK_MSET, dataManager.GetSysString(1268));
-	chkAskMSet->setChecked(gameConf.ask_mset != 0);
-	posY += 30;
 	chkAutoSaveReplay = env->addCheckBox(false, irr::core::rect<irr::s32>(posX, posY, posX + 260, posY + 25), tabHelper, -1, dataManager.GetSysString(1366));
 	chkAutoSaveReplay->setChecked(gameConf.auto_save_replay != 0);
 	elmTabHelperLast = chkAutoSaveReplay;
@@ -454,9 +430,6 @@ bool Game::Initialize() {
 	posY += 30;
 	chkMultiKeywords = env->addCheckBox(false, irr::core::rect<irr::s32>(posX, posY, posX + 260, posY + 25), tabSystem, CHECKBOX_MULTI_KEYWORDS, dataManager.GetSysString(1378));
 	chkMultiKeywords->setChecked(gameConf.search_multiple_keywords > 0);
-	posY += 30;
-	chkRegex = env->addCheckBox(false, irr::core::rect<irr::s32>(posX, posY, posX + 260, posY + 25), tabSystem, CHECKBOX_REGEX, dataManager.GetSysString(1386));
-	chkRegex->setChecked(gameConf.search_regex > 0);
 	posY += 30;
 	chkPreferExpansionScript = env->addCheckBox(false, irr::core::rect<irr::s32>(posX, posY, posX + 260, posY + 25), tabSystem, CHECKBOX_PREFER_EXPANSION, dataManager.GetSysString(1379));
 	chkPreferExpansionScript->setChecked(gameConf.prefer_expansion_script != 0);
@@ -496,14 +469,7 @@ bool Game::Initialize() {
 	posY += 30;
 	chkMusicMode = env->addCheckBox(false, irr::core::rect<irr::s32>(posX, posY, posX + 260, posY + 25), tabSystem, -1, dataManager.GetSysString(1281));
 	chkMusicMode->setChecked(gameConf.music_mode != 0);
-	posY += 30;
-	chkEnablePScale = env->addCheckBox(false, irr::core::rect<irr::s32>(posX, posY, posX + 260, posY + 25), tabSystem, -1, dataManager.GetSysString(1269));
-	chkEnablePScale->setChecked(gameConf.chkEnablePScale != 0);
-	posY += 30;
-	env->addStaticText(dataManager.GetSysString(1267), irr::core::rect<irr::s32>(posX + 23, posY + 3, posX + 160, posY + 28), false, false, tabSystem);
-	cbLocale = env->addComboBox(irr::core::rect<irr::s32>(posX + 150, posY + 4, posX + 250, posY + 21), tabSystem, COMBOBOX_LOCALE);
-	RefreshLocales();
-	elmTabSystemLast = cbLocale;
+	elmTabSystemLast = chkMusicMode;
 	//
 	wHand = env->addWindow(irr::core::rect<irr::s32>(500, 450, 825, 605), false, L"");
 	wHand->getCloseButton()->setVisible(false);
@@ -939,6 +905,23 @@ bool Game::Initialize() {
 	//cancel or finish
 	btnCancelOrFinish = env->addButton(irr::core::rect<irr::s32>(205, 230, 295, 265), 0, BUTTON_CANCEL_OR_FINISH, dataManager.GetSysString(1295));
 	btnCancelOrFinish->setVisible(false);
+	//big picture
+	wBigCard = env->addWindow(irr::core::rect<irr::s32>(0, 0, 0, 0), false, L"");
+	wBigCard->getCloseButton()->setVisible(false);
+	wBigCard->setDrawTitlebar(false);
+	wBigCard->setDrawBackground(false);
+	wBigCard->setVisible(false);
+	imgBigCard = env->addImage(irr::core::rect<irr::s32>(0, 0, 0, 0), wBigCard);
+	imgBigCard->setScaleImage(false);
+	imgBigCard->setUseAlphaChannel(true);
+	btnBigCardOriginalSize = env->addButton(irr::core::rect<irr::s32>(205, 100, 295, 135), 0, BUTTON_BIG_CARD_ORIG_SIZE, dataManager.GetSysString(1443));
+	btnBigCardZoomIn = env->addButton(irr::core::rect<irr::s32>(205, 140, 295, 175), 0, BUTTON_BIG_CARD_ZOOM_IN, dataManager.GetSysString(1441));
+	btnBigCardZoomOut = env->addButton(irr::core::rect<irr::s32>(205, 180, 295, 215), 0, BUTTON_BIG_CARD_ZOOM_OUT, dataManager.GetSysString(1442));
+	btnBigCardClose = env->addButton(irr::core::rect<irr::s32>(205, 230, 295, 265), 0, BUTTON_BIG_CARD_CLOSE, dataManager.GetSysString(1440));
+	btnBigCardOriginalSize->setVisible(false);
+	btnBigCardZoomIn->setVisible(false);
+	btnBigCardZoomOut->setVisible(false);
+	btnBigCardClose->setVisible(false);
 	//leave/surrender/exit
 	btnLeaveGame = env->addButton(irr::core::rect<irr::s32>(205, 5, 295, 80), 0, BUTTON_LEAVE_GAME, L"");
 	btnLeaveGame->setVisible(false);
@@ -972,8 +955,6 @@ bool Game::Initialize() {
 		col.setAlpha(224);
 		env->getSkin()->setColor((irr::gui::EGUI_DEFAULT_COLOR)i, col);
 	}
-	for (auto ptr : editbox_list)
-		ptr->setMax(LEN_CHAT_MSG - 1);
 	auto size = driver->getScreenSize();
 	if(window_size != size) {
 		window_size = size;
@@ -984,7 +965,6 @@ bool Game::Initialize() {
 	return true;
 }
 void Game::MainLoop() {
-	LoadExpansionsAll();
 	wchar_t cap[256];
 	camera = smgr->addCameraSceneNode(0);
 	irr::core::matrix4 mProjection;
@@ -1065,20 +1045,14 @@ void Game::MainLoop() {
 		if(cur_time < fps * 17 - 20)
 			std::this_thread::sleep_for(std::chrono::milliseconds(20));
 		if(cur_time >= 1000) {
-			myswprintf(cap, L"YGO-VI-Rook FPS: %d", fps);
+			myswprintf(cap, L"YGOPro FPS: %d", fps);
 			device->setWindowCaption(cap);
 			fps = 0;
 			cur_time -= 1000;
 			timer->setTime(0);
 			if(dInfo.time_player == 0 || dInfo.time_player == 1)
-				if(dInfo.time_left[dInfo.time_player]) {
+				if(dInfo.time_left[dInfo.time_player])
 					dInfo.time_left[dInfo.time_player]--;
-					RefreshTimeDisplay();
-				}
-		}
-		if (DuelClient::try_needed) {
-			DuelClient::try_needed = false;
-			DuelClient::StartClient(DuelClient::temp_ip, DuelClient::temp_port, false);
 		}
 	}
 	DuelClient::StopClient(true);
@@ -1087,23 +1061,6 @@ void Game::MainLoop() {
 	std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	SaveConfig();
 	device->drop();
-}
-void Game::RefreshTimeDisplay() {
-	for(int i = 0; i < 2; ++i) {
-		if(dInfo.time_left[i] && dInfo.time_limit) {
-			if(dInfo.time_left[i] >= dInfo.time_limit / 2)
-				dInfo.time_color[i] = 0xffffffff;
-			else if(dInfo.time_left[i] >= dInfo.time_limit / 3)
-				dInfo.time_color[i] = 0xffffff00;
-			else if(dInfo.time_left[i] >= dInfo.time_limit / 6)
-				dInfo.time_color[i] = 0xffff7f00;
-			else
-				dInfo.time_color[i] = 0xffff0000;
-		} else
-			dInfo.time_color[i] = 0xffffffff;
-	}
-	myswprintf(dInfo.str_time_left[0], L"%d", dInfo.time_left[0]);
-	myswprintf(dInfo.str_time_left[1], L"%d", dInfo.time_left[1]);
 }
 void Game::BuildProjectionMatrix(irr::core::matrix4& mProjection, irr::f32 left, irr::f32 right, irr::f32 bottom, irr::f32 top, irr::f32 znear, irr::f32 zfar) {
 	for(int i = 0; i < 16; ++i)
@@ -1226,38 +1183,6 @@ void Game::LoadExpansions() {
 			}
 		}
 	}
-void Game::LoadExpansionsAll() {
-	auto list = GetExpansionsList();
-	for (const auto& exp : list) {
-		LoadExpansions(exp.c_str());
-	}
-}
-std::vector<std::wstring> Game::GetExpansionsList(const wchar_t* suffix) {
-	if(!suffix)
-		return expansions_list;
-	std::vector<std::wstring> list;
-	wchar_t buf[1024];
-	for(const auto& exp : expansions_list) {
-		myswprintf(buf, L"%ls%ls", exp.c_str(), suffix);
-		list.push_back(buf);
-	}
-	return list;
-}
-std::vector<std::string> Game::GetExpansionsListU(const char* suffix) {
-	auto list = GetExpansionsList(nullptr);
-	std::vector<std::string> expansions_list_u;
-	char exp_u[1024];
-	char exp_u2[1024];
-	for (const auto& exp : list) {
-		BufferIO::EncodeUTF8(exp.c_str(), exp_u);
-		if(!suffix)
-			expansions_list_u.push_back(exp_u);
-		else {
-			std::snprintf(exp_u2, sizeof exp_u2, "%s%s", exp_u, suffix);
-			expansions_list_u.push_back(exp_u2);
-		}
-	}
-	return expansions_list_u;
 }
 void Game::RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck, bool selectlastused) {
 	cbCategory->clear();
@@ -1332,20 +1257,6 @@ void Game::RefreshSingleplay() {
 		if(!isdir && IsExtension(name, L".lua"))
 			lstSinglePlayList->addItem(name);
 	});
-}
-void Game::RefreshLocales() {
-	cbLocale->clear();
-	cbLocale->addItem(L"default");
-	FileSystem::TraversalDir(L"./locales", [this](const wchar_t* name, bool isdir) {
-		if(isdir && wcscmp(name, L".") && wcscmp(name, L".."))
-			cbLocale->addItem(name);
-	});
-	for(size_t i = 0; i < cbLocale->getItemCount(); ++i) {
-		if(!wcscmp(cbLocale->getItem(i), gameConf.locale)) {
-			cbLocale->setSelected(i);
-			break;
-		}
-	}
 }
 void Game::RefreshBot() {
 	if(!gameConf.enable_bot_mode)
@@ -1423,15 +1334,11 @@ void Game::LoadConfig() {
 			gameConf.use_image_scale_multi_thread = std::strtol(valbuf, nullptr, 10) > 0;
 		} else if (!std::strcmp(strbuf, "use_image_load_background_thread")) {
 			gameConf.use_image_load_background_thread = std::strtol(valbuf, nullptr, 10) > 0;
-		} else if(!std::strcmp(strbuf, "freever")) {
-			gameConf.freever = std::strtol(valbuf, nullptr, 10) > 0;
 		} else if(!std::strcmp(strbuf, "errorlog")) {
 			unsigned int val = std::strtol(valbuf, nullptr, 10);
 			enable_log = val & 0xff;
 		} else if(!std::strcmp(strbuf, "serverport")) {
 			gameConf.serverport = std::strtol(valbuf, nullptr, 10);
-		} else if(!std::strcmp(strbuf, "game_version")) {
-			gameConf.game_version = std::strtol(valbuf, nullptr, 10);;
 		} else if(!std::strcmp(strbuf, "lasthost")) {
 			BufferIO::DecodeUTF8(valbuf, gameConf.lasthost);
 		} else if(!std::strcmp(strbuf, "lastport")) {
@@ -1474,8 +1381,6 @@ void Game::LoadConfig() {
 			gameConf.auto_search_limit = std::strtol(valbuf, nullptr, 10);
 		} else if(!std::strcmp(strbuf, "search_multiple_keywords")) {
 			gameConf.search_multiple_keywords = std::strtol(valbuf, nullptr, 10);
-		} else if(!std::strcmp(strbuf, "search_regex")) {
-			gameConf.search_regex = std::strtol(valbuf, nullptr, 10);
 		} else if(!std::strcmp(strbuf, "ignore_deck_changes")) {
 			gameConf.chkIgnoreDeckChanges = std::strtol(valbuf, nullptr, 10);
 		} else if(!std::strcmp(strbuf, "default_ot")) {
@@ -1492,8 +1397,6 @@ void Game::LoadConfig() {
 			gameConf.hide_player_name = std::strtol(valbuf, nullptr, 10);
 		} else if(!std::strcmp(strbuf, "prefer_expansion_script")) {
 			gameConf.prefer_expansion_script = std::strtol(valbuf, nullptr, 10);
-		} else if(!std::strcmp(strbuf, "ask_mset")) {
-			gameConf.ask_mset = std::strtol(valbuf, nullptr, 10);
 		} else if(!std::strcmp(strbuf, "window_maximized")) {
 			gameConf.window_maximized = std::strtol(valbuf, nullptr, 10) > 0;
 		} else if(!std::strcmp(strbuf, "window_width")) {
@@ -1524,8 +1427,6 @@ void Game::LoadConfig() {
 		} else if(!std::strcmp(strbuf, "music_mode")) {
 			gameConf.music_mode = std::strtol(valbuf, nullptr, 10);
 #endif
-		} else if(!std::strcmp(strbuf, "enable_pendulum_scale")) {
-			gameConf.chkEnablePScale = strtol(valbuf, nullptr, 10);
 		} else {
 			// options allowing multiple words
 			if (std::sscanf(linebuf, "%63s = %959[^\n]", strbuf, valbuf) != 2)
@@ -1551,107 +1452,11 @@ void Game::LoadConfig() {
 				BufferIO::DecodeUTF8(valbuf, gameConf.lastcategory);
 			} else if (!std::strcmp(strbuf, "lastdeck")) {
 				BufferIO::DecodeUTF8(valbuf, gameConf.lastdeck);
-			} else if (!std::strcmp(strbuf, "locale")) {
-				BufferIO::DecodeUTF8(valbuf, gameConf.locale);
 			} else if(!std::strcmp(strbuf, "bot_deck_path")) {
 				BufferIO::DecodeUTF8(valbuf, gameConf.bot_deck_path);
 			}
 		}
 	}
-	return true;
-}
-void Game::LoadConfig() {
-	gameConf.use_d3d = 0;
-	gameConf.use_image_scale = 1;
-	gameConf.antialias = 0;
-	gameConf.serverport = 7911;
-	gameConf.textfontsize = 14;
-	gameConf.nickname[0] = 0;
-	gameConf.gamename[0] = 0;
-	gameConf.bot_deck_path[0] = 0;
-	gameConf.lastcategory[0] = 0;
-	gameConf.lastdeck[0] = 0;
-	gameConf.numfont[0] = 0;
-	gameConf.textfont[0] = 0;
-	gameConf.lasthost[0] = 0;
-	gameConf.roompass[0] = 0;
-	//settings
-	gameConf.chkMAutoPos = 0;
-	gameConf.chkSTAutoPos = 1;
-	gameConf.chkRandomPos = 0;
-	gameConf.chkAutoChain = 0;
-	gameConf.chkWaitChain = 0;
-	gameConf.chkDefaultShowChain = 0;
-	gameConf.chkIgnore1 = 0;
-	gameConf.chkIgnore2 = 0;
-	gameConf.use_lflist = 1;
-	gameConf.default_lflist = 0;
-	gameConf.default_rule = YGOPRO_DEFAULT_DUEL_RULE;
-	gameConf.hide_setname = 0;
-	gameConf.hide_hint_button = 0;
-	gameConf.control_mode = 0;
-	gameConf.draw_field_spell = 1;
-	gameConf.separate_clear_button = 1;
-	gameConf.auto_search_limit = 0;
-	gameConf.search_multiple_keywords = 1;
-	gameConf.search_regex = 0;
-	gameConf.chkIgnoreDeckChanges = 0;
-	gameConf.defaultOT = 1;
-	gameConf.enable_bot_mode = 1;
-	gameConf.quick_animation = 0;
-	gameConf.auto_save_replay = 0;
-	gameConf.draw_single_chain = 0;
-	gameConf.hide_player_name = 0;
-	gameConf.prefer_expansion_script = 0;
-	gameConf.ask_mset = 0;
-	gameConf.enable_sound = true;
-	gameConf.sound_volume = 0.5;
-	gameConf.enable_music = true;
-	gameConf.music_volume = 0.5;
-	gameConf.music_mode = 1;
-	gameConf.window_maximized = false;
-	gameConf.window_width = 1024;
-	gameConf.window_height = 640;
-	gameConf.resize_popup_menu = false;
-	gameConf.chkEnablePScale = 1;
-	gameConf.skin_index = -1;
-	LoadConfigFromFile("system.conf"); //default config
-#ifdef YGOPRO_COMPAT_MYCARD
-	if(!gameConf.locale || wcslen(gameConf.locale) <= 0)
-#else // YGOPRO_COMPAT_MYCARD
-	if(!LoadConfigFromFile("system_user.conf"))
-#endif
-	{
-		unsigned int lcid = 0;
-#ifdef _WIN32
-		lcid = ((unsigned int)GetSystemDefaultLangID()) & 0xff;
-		switch(lcid) {
-			case 0x04: {
-				myswprintf(mainGame->gameConf.locale, L"%ls", L"zh-CN");
-				break;
-			}
-			case 0x09: {
-				myswprintf(mainGame->gameConf.locale, L"%ls", L"en-US");
-				break;
-			}
-			case 0x0a: {
-				myswprintf(mainGame->gameConf.locale, L"%ls", L"es-ES");
-				break;
-			}
-			case 0x11: {
-				myswprintf(mainGame->gameConf.locale, L"%ls", L"ja-JP");
-				break;
-			}
-			case 0x12: {
-				myswprintf(mainGame->gameConf.locale, L"%ls", L"ko-KR");
-				break;
-			}
-			case 0x16: {
-				myswprintf(mainGame->gameConf.locale, L"%ls", L"pt-BR");
-				break;
-			}
-		}
-#else
 	std::fclose(fp);
 }
 void Game::SaveConfig() {
@@ -1662,10 +1467,8 @@ void Game::SaveConfig() {
 	std::fprintf(fp, "use_image_scale = %d\n", gameConf.use_image_scale ? 1 : 0);
 	std::fprintf(fp, "use_image_scale_multi_thread = %d\n", gameConf.use_image_scale_multi_thread ? 1 : 0);
 	std::fprintf(fp, "use_image_load_background_thread = %d\n", gameConf.use_image_load_background_thread ? 1 : 0);
-	std::fprintf(fp, "freever = %d\n", gameConf.freever ? 1 : 0);
 	std::fprintf(fp, "antialias = %d\n", gameConf.antialias);
 	std::fprintf(fp, "errorlog = %u\n", enable_log);
-	std::fprintf(fp, "game_version = %d\n", gameConf.game_version);
 	BufferIO::CopyWideString(ebNickName->getText(), gameConf.nickname);
 	BufferIO::EncodeUTF8(gameConf.nickname, linebuf);
 	std::fprintf(fp, "nickname = %s\n", linebuf);
@@ -1706,7 +1509,6 @@ void Game::SaveConfig() {
 	std::fprintf(fp, "auto_search_limit = %d\n", gameConf.auto_search_limit);
 	std::fprintf(fp, "#search_multiple_keywords = 0: Disable. 1: Search mutiple keywords with separator \" \". 2: with separator \"+\"\n");
 	std::fprintf(fp, "search_multiple_keywords = %d\n", gameConf.search_multiple_keywords);
-	std::fprintf(fp, "search_regex = %d\n", gameConf.search_regex);
 	std::fprintf(fp, "ignore_deck_changes = %d\n", (chkIgnoreDeckChanges->isChecked() ? 1 : 0));
 	std::fprintf(fp, "default_ot = %d\n", gameConf.defaultOT);
 	std::fprintf(fp, "enable_bot_mode = %d\n", gameConf.enable_bot_mode);
@@ -1717,7 +1519,6 @@ void Game::SaveConfig() {
 	std::fprintf(fp, "draw_single_chain = %d\n", gameConf.draw_single_chain);
 	std::fprintf(fp, "hide_player_name = %d\n", gameConf.hide_player_name);
 	std::fprintf(fp, "prefer_expansion_script = %d\n", gameConf.prefer_expansion_script);
-	std::fprintf(fp, "ask_mset = %d\n", gameConf.ask_mset);
 	std::fprintf(fp, "window_maximized = %d\n", (gameConf.window_maximized ? 1 : 0));
 	std::fprintf(fp, "window_width = %d\n", gameConf.window_width);
 	std::fprintf(fp, "window_height = %d\n", gameConf.window_height);
@@ -1732,9 +1533,6 @@ void Game::SaveConfig() {
 	std::fprintf(fp, "music_volume = %d\n", vol);
 	std::fprintf(fp, "music_mode = %d\n", (chkMusicMode->isChecked() ? 1 : 0));
 #endif
-	std::fprintf(fp, "enable_pendulum_scale = %d\n", ((mainGame->chkEnablePScale->isChecked()) ? 1 : 0));
-	BufferIO::EncodeUTF8(gameConf.locale, linebuf);
-	std::fprintf(fp, "locale = %s\n", linebuf);
 	std::fclose(fp);
 }
 void Game::ShowCardInfo(int code, bool resize) {
@@ -1889,7 +1687,6 @@ void Game::AddChatMsg(const wchar_t* msg, int player, bool play_sound) {
 		chatMsg[0].append(L": ");
 		break;
 	case 8: //system custom message, no prefix.
-		soundManager.PlaySoundEffect(SOUND_CHAT);
 		chatMsg[0].append(L"[System]: ");
 		break;
 	case 9: //error message
@@ -1903,9 +1700,6 @@ void Game::AddChatMsg(const wchar_t* msg, int player, bool play_sound) {
 			chatMsg[0].append(L"[---]: ");
 	}
 	chatMsg[0].append(msg);
-	wchar_t msg_front[256];
-	myswprintf(msg_front, L"[Chat]%ls", chatMsg[0].c_str());
-	AddLog(msg_front);
 }
 void Game::ClearChatMsg() {
 	for(int i = 7; i >= 0; --i) {
@@ -1939,42 +1733,6 @@ void Game::ErrorLog(const char* msg) {
 	std::fprintf(fp, "[%s]%s\n", timebuf, msg);
 	std::fclose(fp);
 }
-void Game::initUtils() {
-	//files in ygopro-starter-pack
-	FileSystem::MakeDir("deck");
-	FileSystem::MakeDir("single");
-	//original files
-	FileSystem::MakeDir("script");
-	FileSystem::MakeDir("skin");
-	FileSystem::MakeDir("textures");
-	//subdirs in textures
-	FileSystem::MakeDir("textures/act");
-	FileSystem::MakeDir("textures/attack");
-	FileSystem::MakeDir("textures/bg");
-	FileSystem::MakeDir("textures/bg_deck");
-	FileSystem::MakeDir("textures/bg_menu");
-	FileSystem::MakeDir("textures/cover");
-	FileSystem::MakeDir("textures/cover2");
-	FileSystem::MakeDir("textures/pscale");
-	//sound
-#ifdef YGOPRO_USE_AUDIO
-	FileSystem::MakeDir("sound");
-	FileSystem::MakeDir("sound/BGM");
-	FileSystem::MakeDir("sound/BGM/advantage");
-	FileSystem::MakeDir("sound/BGM/deck");
-	FileSystem::MakeDir("sound/BGM/disadvantage");
-	FileSystem::MakeDir("sound/BGM/duel");
-	FileSystem::MakeDir("sound/BGM/lose");
-	FileSystem::MakeDir("sound/BGM/menu");
-	FileSystem::MakeDir("sound/BGM/win");
-	//custom sound
-	FileSystem::MakeDir("sound/custom");
-	FileSystem::MakeDir("sound/BGM/custom");
-#endif
-	//pics
-	FileSystem::MakeDir("pics");
-	FileSystem::MakeDir("pics/field");
-}
 void Game::ClearTextures() {
 	matManager.mCard.setTexture(0, 0);
 	ClearCardInfo(0);
@@ -2006,19 +1764,16 @@ void Game::CloseGameWindow() {
 	wANCard->setVisible(false);
 	wANNumber->setVisible(false);
 	wANRace->setVisible(false);
-	wCardImg->setVisible(false);
 	wCardSelect->setVisible(false);
 	wCardDisplay->setVisible(false);
 	wCmdMenu->setVisible(false);
 	wFTSelect->setVisible(false);
 	wHand->setVisible(false);
-	wInfos->setVisible(false);
 	wMessage->setVisible(false);
 	wOptions->setVisible(false);
 	wPhase->setVisible(false);
 	wPosSelect->setVisible(false);
 	wQuery->setVisible(false);
-	wSurrender->setVisible(false);
 	wReplayControl->setVisible(false);
 	wReplaySave->setVisible(false);
 	stHintMsg->setVisible(false);
@@ -2039,7 +1794,6 @@ void Game::CloseDuelWindow() {
 	logParam.clear();
 	lstHostList->clear();
 	DuelClient::hosts.clear();
-	DuelClient::hosts_srvpro.clear();
 	ClearTextures();
 	ResizeChatInputWindow();
 	closeDoneSignal.Set();
@@ -2112,8 +1866,9 @@ void Game::OnResize() {
 
 	imageManager.ClearTexture();
 	imageManager.ResizeTexture();
-	wMainMenu->setRelativePosition(ResizeWin(370, 200, 650, 485));
-	wDeckEdit->setRelativePosition(Resize(309, 8, 605, 130));
+
+	wMainMenu->setRelativePosition(ResizeWin(370, 200, 650, 415));
+	wDeckEdit->setRelativePosition(Resize(309, 5, 605, 130));
 	cbDBDecks->setRelativePosition(Resize(80, 35, 220, 60));
 	btnClearDeck->setRelativePosition(Resize(115, 99, 165, 120));
 	btnSortDeck->setRelativePosition(Resize(60, 99, 110, 120));
@@ -2273,6 +2028,12 @@ void Game::OnResize() {
 	btnChainWhenAvail->setRelativePosition(Resize(205, 180, 295, 215));
 	btnShuffle->setRelativePosition(Resize(205, 230, 295, 265));
 	btnCancelOrFinish->setRelativePosition(Resize(205, 230, 295, 265));
+
+	btnBigCardOriginalSize->setRelativePosition(Resize(205, 100, 295, 135));
+	btnBigCardZoomIn->setRelativePosition(Resize(205, 140, 295, 175));
+	btnBigCardZoomOut->setRelativePosition(Resize(205, 180, 295, 215));
+	btnBigCardClose->setRelativePosition(Resize(205, 230, 295, 265));
+
 	irr::s32 barWidth = (xScale > 1) ? gameConf.textfontsize * xScale : gameConf.textfontsize;
 	env->getSkin()->setSize(irr::gui::EGDS_SCROLLBAR_SIZE, barWidth);
 }
@@ -2404,48 +2165,6 @@ void Game::FlashWindow() {
 	fi.dwTimeout = 0;
 	FlashWindowEx(&fi);
 #endif
-}
-void Game::takeScreenshot() {
-	if(!FileSystem::IsDirExists(L"./screenshots") && !FileSystem::MakeDir(L"./screenshots"))
-		return;
-	irr::video::IImage* const image = driver->createScreenShot();
-	if(image) {
-		irr::c8 filename[64];
-		std::snprintf(filename, 64, "screenshots/ygopro_%u.png", device->getTimer()->getRealTime());
-		if (!driver->writeImageToFile(image, filename))
-			device->getLogger()->log(L"Failed to take screenshot.", irr::ELL_WARNING);
-		image->drop();
-	} else
-		device->getLogger()->log(L"Failed to take screenshot.", irr::ELL_WARNING);
-}
-bool Game::CheckRegEx(const std::wstring& text, const std::wstring& exp, bool exact) {
-	if(!gameConf.search_regex)
-		return false;
-	bool result;
-	try {
-		if(exact)
-			result = std::regex_match(text, std::wregex(exp));
-		else
-			result = std::regex_search(text, std::wregex(exp));
-	} catch(...) {
-		result = false;
-	}
-	return result;
-}
-const char* Game::GetLocaleDir(const char* dir) {
-	if(!gameConf.locale || !wcscmp(gameConf.locale, L"default"))
-		return dir;
-	BufferIO::DecodeUTF8(dir, orig_dir);
-	myswprintf(locale_buf, L"locales/%ls/%ls", gameConf.locale, orig_dir);
-	BufferIO::EncodeUTF8(locale_buf, locale_buf_utf8);
-	return locale_buf_utf8;
-}
-const wchar_t* Game::GetLocaleDirWide(const char* dir) {
-	BufferIO::DecodeUTF8(dir, orig_dir);
-	if(!gameConf.locale || !wcscmp(gameConf.locale, L"default"))
-		return orig_dir;
-	myswprintf(locale_buf, L"locales/%ls/%ls", gameConf.locale, orig_dir);
-	return locale_buf;
 }
 void Game::SetCursor(irr::gui::ECURSOR_ICON icon) {
 	irr::gui::ICursorControl* cursor = device->getCursorControl();

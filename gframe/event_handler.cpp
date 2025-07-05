@@ -222,13 +222,6 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					}
 					break;
 				}
-				case MSG_SELECT_IDLECMD: {
-					mainGame->HideElement(mainGame->wQuery);
-					if(current_mset_param) {
-						DuelClient::SetResponseI(current_mset_param);
-						DuelClient::SendResponse();
-					}
-				}
 				default: {
 					mainGame->HideElement(mainGame->wQuery);
 					break;
@@ -362,7 +355,6 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				if(sel == -1)
 					break;
 				DuelClient::SetResponseI(ancard[sel]);
-				mainGame->dInfo.announce_cache.insert(mainGame->dInfo.announce_cache.begin(), ancard[sel]);
 				mainGame->HideElement(mainGame->wANCard, true);
 				break;
 			}
@@ -522,16 +514,8 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					break;
 				for(size_t i = 0; i < msetable_cards.size(); ++i) {
 					if(msetable_cards[i] == menu_card) {
-						current_mset_param = (i << 16) + 3;
-						if(mainGame->gameConf.ask_mset) {
-							wchar_t wbuf[256];
-							myswprintf(wbuf, dataManager.GetSysString(1368), dataManager.GetName(clicked_card->code));
-							mainGame->stQMessage->setText(wbuf);
-							mainGame->PopupElement(mainGame->wQuery);
-						} else {
-							DuelClient::SetResponseI(current_mset_param);
-							DuelClient::SendResponse();
-						}
+						DuelClient::SetResponseI((i << 16) + 3);
+						DuelClient::SendResponse();
 						break;
 					}
 				}
@@ -929,8 +913,6 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 							myswprintf(formatBuffer, L"%ls[%d](%d)",
 								dataManager.FormatLocation(selectable_cards[i + pos]->overlayTarget->location, selectable_cards[i + pos]->overlayTarget->sequence),
 								selectable_cards[i + pos]->overlayTarget->sequence + 1, selectable_cards[i + pos]->sequence + 1);
-						else if (selectable_cards[i]->location == 0)
-							myswprintf(formatBuffer, L"");
 						else
 							myswprintf(formatBuffer, L"%ls[%d]", dataManager.FormatLocation(selectable_cards[i + pos]->location, selectable_cards[i + pos]->sequence),
 								selectable_cards[i + pos]->sequence + 1);
@@ -1760,17 +1742,6 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			}
 			break;
 		}
-		case irr::KEY_KEY_Z: {
-			if(!mainGame->dInfo.isReplay && !mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX)) {
-				mainGame->dInfo.isReplaySkiping = event.KeyInput.PressedDown;
-				if(mainGame->dInfo.isStarted && !mainGame->dInfo.isReplaySkiping) {
-					mainGame->gMutex.lock();
-					mainGame->dField.RefreshAllCards();
-					mainGame->gMutex.unlock();
-				}
-			}
-			break;
-		}
 		case irr::KEY_F1:
 		case irr::KEY_F2:
 		case irr::KEY_F3:
@@ -1931,14 +1902,8 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				return true;
 				break;
 			}
-			case CHECKBOX_ENABLE_SOUND: {
-				if(!mainGame->chkEnableSound->isChecked())
-					soundManager.StopSound();
-				return true;
-				break;
-			}
 			case CHECKBOX_DISABLE_CHAT: {
-				bool show = (mainGame->is_building && !mainGame->is_siding) ? false : true;
+				bool show = (mainGame->is_building && !mainGame->is_siding) ? false : !mainGame->chkIgnore1->isChecked();
 				mainGame->wChat->setVisible(show);
 				if(!show)
 					mainGame->ClearChatMsg();
@@ -1967,11 +1932,6 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				return true;
 				break;
 			}
-			case CHECKBOX_ASK_MSET: {
-				mainGame->gameConf.ask_mset = mainGame->chkAskMSet->isChecked() ? 1 : 0;
-				return true;
-				break;
-			}
 			case CHECKBOX_LFLIST: {
 				mainGame->gameConf.use_lflist = mainGame->chkLFlist->isChecked() ? 1 : 0;
 				mainGame->cbLFlist->setEnabled(mainGame->gameConf.use_lflist);
@@ -1990,9 +1950,6 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				mainGame->gameConf.default_lflist = mainGame->cbLFlist->getSelected();
 				mainGame->cbHostLFlist->setSelected(mainGame->gameConf.default_lflist);
 				mainGame->deckBuilder.filterList = &deckManager._lfList[mainGame->gameConf.default_lflist];
-				return true;
-				break;
-			}
 				return true;
 				break;
 			}
@@ -2105,13 +2062,6 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 		case irr::KEY_ESCAPE: {
 			if(!mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX))
 				mainGame->device->minimizeWindow();
-			return true;
-			break;
-		}
-		case irr::KEY_KEY_X:
-		case irr::KEY_F12: {
-			if(!event.KeyInput.PressedDown && !mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX))
-				mainGame->takeScreenshot();
 			return true;
 			break;
 		}

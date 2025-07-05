@@ -8,45 +8,6 @@
 
 namespace ygo {
 
-class HostResult {
-public:
-	unsigned int host;
-	unsigned short port;
-	bool isValid() {
-		return host > 0 && port > 0;
-	}
-	HostResult() {
-		host = 0;
-		port = 0;
-	}
-};
-
-#ifndef _WIN32
-#include <resolv.h>
-#include <arpa/nameser.h>
-#include <arpa/nameser_compat.h>
-class RetrivedSRVRecord {
-public:
-	bool valid;
-	unsigned short priority;
-	unsigned short weight;
-	unsigned short port;
-	char host[100];
-	RetrivedSRVRecord(ns_msg nsMsg, int i) {
-		valid = false;
-		ns_rr rr;
-		if (ns_parserr(&nsMsg, ns_s_an, i, &rr) < 0 || ns_rr_type(rr) != T_SRV)
-			return;
-		priority = ns_get16(ns_rr_rdata(rr));
-		weight   = ns_get16(ns_rr_rdata(rr) + NS_INT16SZ);
-		port     = ns_get16(ns_rr_rdata(rr) + 2 * NS_INT16SZ);
-		if (dn_expand(ns_msg_base(nsMsg), ns_msg_end(nsMsg), ns_rr_rdata(rr) + 3 * NS_INT16SZ, host, sizeof(host)) < 0)
-			return;
-		valid = true;
-	}
-};
-#endif
-
 class DuelClient {
 private:
 	static unsigned int connect_state;
@@ -73,10 +34,6 @@ private:
 	static std::set<std::pair<unsigned int, unsigned short>> remotes;
 
 public:
-	static unsigned int temp_ip;
-	static unsigned short temp_port;
-	static unsigned short temp_ver;
-	static bool try_needed;
 	static unsigned char selftype;
 	static bool StartClient(unsigned int ip, unsigned short port, bool create_game = true);
 	static void ConnectTimeout(evutil_socket_t fd, short events, void* arg);
@@ -94,9 +51,6 @@ public:
 		auto p = duel_client_write;
 		buffer_write<uint16_t>(p, 1);
 		buffer_write<uint8_t>(p, proto);
-#ifdef YGOPRO_MESSAGE_DEBUG
-		printf("CTOS: %d\n", proto);
-#endif
 		bufferevent_write(client_bev, duel_client_write, 3);
 	}
 	template<typename ST>
@@ -106,9 +60,6 @@ public:
 		buffer_write<uint16_t>(p, (uint16_t)(1 + sizeof(ST)));
 		buffer_write<uint8_t>(p, proto);
 		std::memcpy(p, &st, sizeof(ST));
-#ifdef YGOPRO_MESSAGE_DEBUG
-		printf("CTOS: %d Length: %ld\n", proto, sizeof(ST));
-#endif
 		bufferevent_write(client_bev, duel_client_write, sizeof(ST) + 3);
 	}
 	static void SendBufferToServer(unsigned char proto, void* buffer, size_t len) {
@@ -118,15 +69,10 @@ public:
 		buffer_write<uint16_t>(p, (uint16_t)(1 + len));
 		buffer_write<uint8_t>(p, proto);
 		std::memcpy(p, buffer, len);
-#ifdef YGOPRO_MESSAGE_DEBUG
-		printf("CTOS: %d Length: %ld\n", proto, len);
-#endif
 		bufferevent_write(client_bev, duel_client_write, len + 3);
 	}
 
-	static std::vector<std::wstring> hosts;
-	static std::vector<std::wstring> hosts_srvpro;
-	static bool is_srvpro;
+	static std::vector<HostPacket> hosts;
 	static void BeginRefreshHost();
 	static int RefreshThread(event_base* broadev);
 	static void BroadcastReply(evutil_socket_t fd, short events, void* arg);

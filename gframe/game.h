@@ -47,50 +47,47 @@ bool IsExtension(const char* filename, const char(&extension)[N]) {
 }
 
 struct Config {
-	bool use_d3d;
-	bool use_image_scale;
-	bool use_image_scale_multi_thread;
+	bool use_d3d{ false };
+	bool use_image_scale{ true };
+	bool use_image_scale_multi_thread{ true };
 #ifdef _OPENMP
-	bool use_image_load_background_thread;
+	bool use_image_load_background_thread{ false };
 #else
-	bool use_image_load_background_thread;
+	bool use_image_load_background_thread{ true };
 #endif
-	bool freever;
-	unsigned short antialias;
-	unsigned short serverport;
-	unsigned char textfontsize;
-	unsigned short game_version;
-	wchar_t lasthost[100];
-	wchar_t lastport[10];
-	wchar_t nickname[20];
-	wchar_t gamename[20];
-	wchar_t roompass[20];
+	unsigned short antialias{ 0 };
+	unsigned short serverport{ 7911 };
+	unsigned char textfontsize{ 14 };
+	wchar_t lasthost[100]{};
+	wchar_t lastport[10]{};
+	wchar_t nickname[20]{};
+	wchar_t gamename[20]{};
+	wchar_t roompass[20]{};
 	//path
-	wchar_t lastcategory[256];
-	wchar_t lastdeck[256];
-	wchar_t textfont[256];
-	wchar_t numfont[256];
-	wchar_t bot_deck_path[256];
-	wchar_t locale[64];
+	wchar_t lastcategory[256]{};
+	wchar_t lastdeck[256]{};
+	wchar_t textfont[256]{};
+	wchar_t numfont[256]{};
+	wchar_t bot_deck_path[256]{};
 	//settings
-	int chkMAutoPos;
-	int chkSTAutoPos;
-	int chkRandomPos;
-	int chkAutoChain;
-	int chkWaitChain;
-	int chkDefaultShowChain;
-	int chkIgnore1;
-	int chkIgnore2;
-	int use_lflist;
-	int default_lflist;
-	int default_rule;
-	int hide_setname;
-	int hide_hint_button;
-	int control_mode;
-	int draw_field_spell;
-	int separate_clear_button;
-	int auto_search_limit;
-	int search_multiple_keywords;
+	int chkMAutoPos{ 0 };
+	int chkSTAutoPos{ 1 };
+	int chkRandomPos{ 0 };
+	int chkAutoChain{ 0 };
+	int chkWaitChain{ 0 };
+	int chkDefaultShowChain{ 0 };
+	int chkIgnore1{ 0 };
+	int chkIgnore2{ 0 };
+	int use_lflist{ 1 };
+	int default_lflist{ 0 };
+	int default_rule{ DEFAULT_DUEL_RULE };
+	int hide_setname{ 0 };
+	int hide_hint_button{ 0 };
+	int control_mode{ 0 };
+	int draw_field_spell{ 1 };
+	int separate_clear_button{ 1 };
+	int auto_search_limit{ -1 };
+	int search_multiple_keywords{ 1 };
 	int chkIgnoreDeckChanges{ 0 };
 	int defaultOT{ 1 };
 	int enable_bot_mode{ 0 };
@@ -108,10 +105,6 @@ struct Config {
 	int window_width{ 1024 };
 	int window_height{ 640 };
 	bool resize_popup_menu{ false };
-	int search_regex{ 0 };
-	int chkEnablePScale{ 1 };
-	int skin_index { -1 };
-	int ask_mset{ 0 };
 };
 
 struct DuelInfo {
@@ -124,7 +117,6 @@ struct DuelInfo {
 	bool isTag{ false };
 	bool isSingleMode{ false };
 	bool is_shuffling{ false };
-	bool is_swapped{ false };
 	bool tag_player[2]{};
 	bool isReplaySwapped{ false };
 	int lp[2]{};
@@ -141,16 +133,8 @@ struct DuelInfo {
 	unsigned char player_type{ 0 };
 	unsigned char time_player{ 0 };
 	unsigned short time_limit{ 0 };
-	unsigned short time_left[2]{ 0 };
-	int card_count[2];
-	int total_attack[2];
-	wchar_t str_time_left[2][16];
-	video::SColor time_color[2];
-	wchar_t str_card_count[2][16];
-	wchar_t str_total_attack[2][16];
-	video::SColor card_count_color[2];
-	video::SColor total_attack_color[2];
-	std::vector<unsigned int> announce_cache;
+	unsigned short time_left[2]{};
+
 	void Clear();
 };
 
@@ -181,26 +165,20 @@ class Game {
 public:
 	bool Initialize();
 	void MainLoop();
-	void RefreshTimeDisplay();
 	void BuildProjectionMatrix(irr::core::matrix4& mProjection, irr::f32 left, irr::f32 right, irr::f32 bottom, irr::f32 top, irr::f32 znear, irr::f32 zfar);
 	void InitStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::u32 cHeight, irr::gui::CGUITTFont* font, const wchar_t* text);
 	std::wstring SetStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::gui::CGUITTFont* font, const wchar_t* text, irr::u32 pos = 0);
-	void LoadExpansions(const wchar_t* expansions_path);
-	void LoadExpansionsAll();
-	std::vector<std::wstring> GetExpansionsList(const wchar_t * suffix = nullptr);
-	std::vector<std::string> GetExpansionsListU(const char* suffix = nullptr);
+	void LoadExpansions();
 	void RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck, bool selectlastused = true);
 	void RefreshDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck);
 	void RefreshDeck(const wchar_t* deckpath, const std::function<void(const wchar_t*)>& additem);
 	void RefreshReplay();
 	void RefreshSingleplay();
 	void RefreshBot();
-	void RefreshLocales();
-	void DrawSelectionLine(irr::irr::video::S3DVertex* vec, bool strip, int width, float* cv);
-	void DrawSelectionLine(irr::gui::IGUIElement* element, int width, irr::irr::video::SColor color);
+	void DrawSelectionLine(irr::video::S3DVertex* vec, bool strip, int width, float* cv);
+	void DrawSelectionLine(irr::gui::IGUIElement* element, int width, irr::video::SColor color);
 	void DrawBackGround();
 	void DrawLinkedZones(ClientCard* pcard);
-	void DrawSpellLinkedZones(ClientCard* pcard);
 	void CheckMutual(ClientCard* pcard, int mark);
 	void DrawCards();
 	void DrawCard(ClientCard* pcard);
@@ -208,14 +186,13 @@ public:
 	void DrawStatus(ClientCard* pcard, int x1, int y1, int x2, int y2);
 	void DrawGUI();
 	void DrawSpec();
-	void DrawBackImage(irr::irr::video::ITexture* texture);
+	void DrawBackImage(irr::video::ITexture* texture);
 	void ShowElement(irr::gui::IGUIElement* element, int autoframe = 0);
 	void HideElement(irr::gui::IGUIElement* element, bool set_action = false);
 	void PopupElement(irr::gui::IGUIElement* element, int hideframe = 0);
 	void WaitFrameSignal(int frame);
 	void DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lflist, bool drag = false);
 	void DrawDeckBd();
-	bool LoadConfigFromFile(const char* file);
 	void LoadConfig();
 	void SaveConfig();
 	void ShowCardInfo(int code, bool resize = false);
@@ -225,7 +202,6 @@ public:
 	void ClearChatMsg();
 	void AddDebugMsg(const char* msgbuf);
 	void ErrorLog(const char* msgbuf);
-	void initUtils();
 	void ClearTextures();
 	void CloseGameButtons();
 	void CloseGameWindow();
@@ -235,9 +211,6 @@ public:
 	int OppositePlayer(int player);
 	int ChatLocalPlayer(int player);
 	const wchar_t* LocalName(int local_player);
-	const char* GetLocaleDir(const char* dir);
-	const wchar_t* GetLocaleDirWide(const char* dir);
-	bool CheckRegEx(const std::wstring& text, const std::wstring& exp, bool exact = false);
 
 	bool HasFocus(irr::gui::EGUI_ELEMENT_TYPE type) const {
 		irr::gui::IGUIElement* focus = env->getFocus();
@@ -268,11 +241,10 @@ public:
 	void SetWindowsIcon();
 	void SetWindowsScale(float scale);
 	void FlashWindow();
-	void takeScreenshot();
 	void SetCursor(irr::gui::ECURSOR_ICON icon);
 	template<typename T>
 	static void DrawShadowText(irr::gui::CGUITTFont* font, const T& text, const irr::core::rect<irr::s32>& position, const irr::core::rect<irr::s32>& padding,
-		irr::irr::video::SColor color = 0xffffffff, irr::irr::video::SColor shadowcolor = 0xff000000, bool hcenter = false, bool vcenter = false, const irr::core::rect<irr::s32>* clip = nullptr);
+		irr::video::SColor color = 0xffffffff, irr::video::SColor shadowcolor = 0xff000000, bool hcenter = false, bool vcenter = false, const irr::core::rect<irr::s32>* clip = nullptr);
 
 	std::mutex gMutex;
 	Signal frameSignal;
@@ -329,7 +301,7 @@ public:
 	DeckBuilder deckBuilder;
 	MenuHandler menuHandler;
 	irr::IrrlichtDevice* device;
-	irr::irr::video::IVideoDriver* driver;
+	irr::video::IVideoDriver* driver;
 	irr::scene::ISceneManager* smgr;
 	irr::scene::ICameraSceneNode* camera;
 
@@ -337,7 +309,6 @@ public:
 	HWND hWnd;
 #endif
 
-	std::vector<irr::gui::IGUIEditBox* > editbox_list;
 	//GUI
 	irr::gui::IGUIEnvironment* env;
 	irr::gui::CGUITTFont* guiFont;
@@ -376,7 +347,6 @@ public:
 	irr::gui::IGUICheckBox* chkQuickAnimation;
 	irr::gui::IGUICheckBox* chkAutoSaveReplay;
 	irr::gui::IGUICheckBox* chkDrawSingleChain;
-	irr::gui::IGUICheckBox* chkAskMSet;
 	irr::gui::IGUICheckBox* chkHidePlayerName;
 	irr::gui::IGUIWindow* tabSystem;
 	irr::gui::IGUIElement* elmTabSystemLast;
@@ -385,7 +355,6 @@ public:
 	irr::gui::IGUICheckBox* chkAutoSearch;
 	irr::gui::IGUICheckBox* chkMultiKeywords;
 	irr::gui::IGUICheckBox* chkPreferExpansionScript;
-	irr::gui::IGUICheckBox* chkRegex;
 	irr::gui::IGUICheckBox* chkLFlist;
 	irr::gui::IGUIComboBox* cbLFlist;
 	irr::gui::IGUICheckBox* chkEnableSound;
@@ -397,8 +366,6 @@ public:
 	irr::gui::IGUIButton* btnWinResizeM;
 	irr::gui::IGUIButton* btnWinResizeL;
 	irr::gui::IGUIButton* btnWinResizeXL;
-	irr::gui::IGUICheckBox* chkEnablePScale;
-	irr::gui::IGUIComboBox* cbLocale;
 	//main menu
 	irr::gui::IGUIWindow* wMainMenu;
 	irr::gui::IGUIButton* btnLanMode;
@@ -665,6 +632,13 @@ public:
 	irr::gui::IGUIButton* btnChainWhenAvail;
 	//cancel or finish
 	irr::gui::IGUIButton* btnCancelOrFinish;
+	//big picture
+	irr::gui::IGUIWindow* wBigCard;
+	irr::gui::IGUIImage* imgBigCard;
+	irr::gui::IGUIButton* btnBigCardOriginalSize;
+	irr::gui::IGUIButton* btnBigCardZoomIn;
+	irr::gui::IGUIButton* btnBigCardZoomOut;
+	irr::gui::IGUIButton* btnBigCardClose;
 };
 
 extern Game* mainGame;
@@ -812,7 +786,6 @@ extern Game* mainGame;
 #define BUTTON_DISPLAY_4			294
 #define SCROLL_CARD_DISPLAY			295
 #define BUTTON_CARD_DISP_OK			296
-
 #define BUTTON_SURRENDER_YES		297
 #define BUTTON_SURRENDER_NO			298
 
@@ -879,17 +852,10 @@ extern Game* mainGame;
 #define CHECKBOX_DRAW_SINGLE_CHAIN	374
 #define CHECKBOX_LFLIST				375
 #define CHECKBOX_HIDE_PLAYER_NAME	376
-#define CHECKBOX_REGEX				377
-#define COMBOBOX_LOCALE				378
-#define CHECKBOX_ASK_MSET			379
-
-#define TEXTURE_DUEL				0
-#define TEXTURE_DECK				1
-#define TEXTURE_MENU				2
-#define TEXTURE_COVER_S				3
-#define TEXTURE_COVER_O				4
-#define TEXTURE_ATTACK				5
-#define TEXTURE_ACTIVATE			6
+#define BUTTON_BIG_CARD_CLOSE		380
+#define BUTTON_BIG_CARD_ZOOM_IN		381
+#define BUTTON_BIG_CARD_ZOOM_OUT	382
+#define BUTTON_BIG_CARD_ORIG_SIZE	383
 
 #define AVAIL_OCG					0x1
 #define AVAIL_TCG					0x2
