@@ -1,3 +1,3 @@
 [submodule "ygopro-core"]
-	path = ygopro-core
+	path = ocgcore
 	url = git@github.com:Fluorohydride/ygopro-core.git
